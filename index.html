@@ -235,7 +235,7 @@
                 } else {
                     if(user && user.password === passIn) {
                         currentUser = user;
-                        // FIX: Ép kiểu xu về số ngay khi đăng nhập thành công
+                        // Ép kiểu xu về số ngay khi đăng nhập
                         currentUser.xu = parseInt(user.xu) || 0;
                         
                         closeAuthModal();
@@ -263,7 +263,7 @@
                 const res = await fetch(`${photoPriceAPI}/search?code=${encodeURIComponent(code)}`);
                 const data = await res.json();
                 if (data.length > 0) {
-                    const fixedPrice = parseInt(data[0].price);
+                    const fixedPrice = parseInt(data[0].price) || 0;
                     unlockedPhotos.push(code);
                     document.getElementById('emptyMsg').classList.add('hidden');
                     const card = document.createElement('div');
@@ -296,15 +296,18 @@
         }
 
         async function updateData(newXu, usedCodesString) {
-            // FIX: Đảm bảo newXu là một số trước khi gửi API và cập nhật giao diện
-            const finalXuValue = parseInt(newXu);
+            // Đảm bảo newXu luôn là số trước khi gửi đi và hiển thị
+            const numericXu = parseInt(newXu);
+            if (isNaN(numericXu)) return showToast("Lỗi dữ liệu số!", "error");
+
             await fetch(`${apiURL}/username/${currentUser.username}`, { 
                 method:'PATCH', 
                 headers:{'Content-Type':'application/json'}, 
-                body:JSON.stringify({data:{ xu: finalXuValue, usedCodes: usedCodesString }}) 
+                body:JSON.stringify({data:{ xu: numericXu, usedCodes: usedCodesString }}) 
             });
-            currentUser.xu = finalXuValue; 
-            document.getElementById('uXu').innerText = finalXuValue;
+            
+            currentUser.xu = numericXu; 
+            document.getElementById('uXu').innerText = numericXu;
         }
 
         async function handleRedeem() {
@@ -317,10 +320,9 @@
                 const data = await res.json();
                 const gift = data.find(g => g.code.trim().toUpperCase() === codeInput && g.status === 'active');
                 if (gift) {
-                    // FIX: Ép kiểu cả hai giá trị sang số để tránh lỗi NaN
-                    const currentXu = parseInt(currentUser.xu) || 0;
-                    const giftAmount = parseInt(gift.amount) || 0;
-                    await updateData(currentXu + giftAmount, currentUser.usedCodes);
+                    const currentBalance = parseInt(currentUser.xu) || 0;
+                    const bonus = parseInt(gift.amount) || 0;
+                    await updateData(currentBalance + bonus, currentUser.usedCodes);
                     await fetch(`${giftAPI}/code/${gift.code}`, { method: 'DELETE' });
                     showToast(`Thành công +${gift.amount} xu!`); closeGiftModal();
                 } else showToast("Mã sai hoặc đã dùng!", "error");
@@ -328,7 +330,7 @@
         }
 
         function openModalView(code, url, el) {
-            const price = parseInt(el.parentElement.getAttribute('data-price'));
+            const price = parseInt(el.parentElement.getAttribute('data-price')) || 0;
             currentPhoto = { code, url, price, cardEl: el.parentElement };
             document.getElementById('fullImage').src = url;
             document.getElementById('photoPrice').innerText = price;
@@ -341,20 +343,32 @@
 
         async function startPurchase() {
             if (!requireLogin()) return;
-            // FIX: Ép kiểu xu hiện tại sang số để so sánh chính xác
-            const myCurrentXu = parseInt(currentUser.xu) || 0;
-            if(myCurrentXu < currentPhoto.price) return showToast("Không đủ xu!", "error");
             
-            const btn = document.getElementById('purchaseBtn'); btn.classList.add('btn-loading');
+            // Ép kiểu chắc chắn trước khi so sánh và tính toán
+            const userBalance = parseInt(currentUser.xu) || 0;
+            const photoCost = parseInt(currentPhoto.price) || 0;
+
+            if(userBalance < photoCost) return showToast("Không đủ xu!", "error");
+            
+            const btn = document.getElementById('purchaseBtn'); 
+            btn.classList.add('btn-loading');
+            
             try {
-                await updateData(myCurrentXu - currentPhoto.price, currentUser.usedCodes);
+                // Tính toán số dư mới
+                const newBalance = userBalance - photoCost;
+                await updateData(newBalance, currentUser.usedCodes);
+                
                 currentPhoto.cardEl.classList.remove('locked');
                 currentPhoto.cardEl.querySelector('.status-text').innerHTML = "ĐÃ MUA ✅";
                 document.getElementById('wm').style.display = 'block';
                 document.getElementById('fullImage').style.filter = "none";
                 document.getElementById('buySection').style.display = "none";
                 showToast("Đã mở khóa ảnh!");
-            } catch(e) { showToast("Lỗi!", "error"); } finally { btn.classList.remove('btn-loading'); }
+            } catch(e) { 
+                showToast("Lỗi hệ thống!", "error"); 
+            } finally { 
+                btn.classList.remove('btn-loading'); 
+            }
         }
 
         function copyShop(c) { navigator.clipboard.writeText(c).then(() => showToast("Đã copy mã!")); }
@@ -364,4 +378,3 @@
     </script>
 </body>
 </html>
-     
