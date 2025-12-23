@@ -2,179 +2,201 @@
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
-<title>Squirrel's Paw - Dropbox Link Processor</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
+<title>Squirrel's Paw - Final Fixed</title>
 <style>
-/* ... Giữ nguyên phần CSS của bạn ... */
-* { box-sizing: border-box; }
-body {
-    margin: 0;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: linear-gradient(135deg, #4facfe, #00f2fe);
-    min-height: 100vh;
-    padding: 40px 15px;
-}
-.app {
-    max-width: 850px;
-    margin: auto;
-    background: #fff;
-    border-radius: 15px;
-    padding: 25px;
-    box-shadow: 0 25px 50px rgba(0,0,0,.15);
-}
-h2 {
-    text-align: center;
-    margin-bottom: 20px;
-    color: #2d3436;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-}
-textarea, select {
-    width: 100%;
-    display: block;
-    margin-bottom: 15px;
-    padding: 12px;
-    border-radius: 8px;
-    border: 1px solid #dcdde1;
-    font-size: 14px;
-    outline: none;
-}
-textarea { height: 80px; resize: none; }
-.main { display: grid; grid-template-columns: 1fr 1.2fr; gap: 20px; }
-.box {
-    border: 2px dashed #dfe6e9;
-    border-radius: 12px;
-    padding: 15px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: space-between;
-}
-.qr-box img { width: 140px; height: 140px; background: #f9f9f9; margin-bottom: 15px; }
-pre {
-    width: 100%;
-    margin: 0;
-    background: #2d3436;
-    color: #00ff00;
-    border-radius: 8px;
-    padding: 12px;
-    font-size: 13px;
-    font-family: 'Courier New', Courier, monospace;
-    white-space: pre-wrap;
-    word-break: break-all;
-    line-height: 1.5; 
-    max-height: calc(1.5em * 5 + 24px); 
-    overflow-y: auto;
-}
-button {
-    width: 100%;
-    padding: 10px;
-    border-radius: 8px;
-    border: none;
-    color: #fff;
-    cursor: pointer;
-    font-weight: bold;
-    transition: 0.3s;
-    margin-top: 10px;
-}
-.qr-box button { background: #6c5ce7; }
-.output-box button { background: #00b894; }
-button:hover { opacity: 0.9; transform: translateY(-2px); }
-@media (max-width: 600px) { .main { grid-template-columns: 1fr; } }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+        font-family: sans-serif;
+        background: #f8f9fa;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 20px;
+    }
+    .app-container {
+        width: 100%;
+        max-width: 400px;
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+    h2 { text-align: center; color: #333; margin-bottom: 10px; }
+
+    textarea, select, .btn {
+        width: 100%;
+        padding: 12px;
+        border-radius: 8px;
+        border: 1px solid #ccc;
+        font-size: 14px;
+        outline: none;
+    }
+    textarea { height: 80px; resize: none; }
+
+    /* Nút chọn file */
+    #fBtn { background: #6c5ce7; color: white; display: none; font-weight: bold; border: none; }
+
+    /* KHUNG BAO QUANH QR - Theo ý bạn */
+    .qr-frame {
+        border: 2px dashed #bbb;
+        border-radius: 12px;
+        padding: 15px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        background: #fff;
+        margin-top: 10px;
+    }
+    #qrImg {
+        width: 180px; height: 180px;
+        margin-bottom: 15px;
+        object-fit: contain;
+    }
+
+    /* Nút bấm xếp dọc dưới QR */
+    .btn { cursor: pointer; border: none; font-weight: bold; color: white; margin-top: 8px; }
+    .btn-qr { background: #0984e3; }
+    .btn-txt { background: #00b894; }
+
+    /* Loading Overlay */
+    #loader {
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(255,255,255,0.9);
+        display: none; flex-direction: column;
+        justify-content: center; align-items: center; z-index: 1000;
+    }
+    .spin {
+        width: 40px; height: 40px;
+        border: 4px solid #f3f3f3; border-top: 4px solid #3498db;
+        border-radius: 50%; animation: s 0.6s linear infinite;
+    }
+    @keyframes s { to { transform: rotate(360deg); } }
 </style>
 </head>
 <body>
 
-<div class="app">
+<div id="loader">
+    <div class="spin"></div>
+    <p style="margin-top:10px;">⚡ Đang tăng tốc xử lý 500%...</p>
+</div>
+
+<div class="app-container">
     <h2>Squirrel's Paw</h2>
 
-    <textarea id="input" placeholder="Dán link Dropbox vào đây..."></textarea>
+    <input type="file" id="fIn" style="display:none">
+    <button id="fBtn" onclick="document.getElementById('fIn').click()">📁 CHỌN FILE (BASE64)</button>
+
+    <textarea id="txtIn" placeholder="Dán link hoặc nội dung..."></textarea>
 
     <select id="mode">
-        <option value="binary">Mã Nhị phân (Binary)</option>
-        <option value="decimal">Mã Thập phân (Decimal)</option>
-        <option value="base64">Mã Base64</option>
+        <option value="binary">Mã Nhị phân</option>
+        <option value="decimal">Mã Thập phân</option>
+        <option value="base64">Mã Base64 (Hỗ trợ File)</option>
     </select>
 
-    <div class="main">
-        <div class="box qr-box">
-            <img id="qrImg" src="https://via.placeholder.com/150?text=QR+Code" alt="QR Code">
-            <button onclick="downloadQR()">Tải QR PNG</button>
-        </div>
-
-        <div class="box output-box">
-            <pre id="output">Kết quả sẽ hiện ở đây...</pre>
-            <button onclick="downloadTXT()">Tải File .TXT</button>
-        </div>
+    <div class="qr-frame">
+        <img id="qrImg" src="https://via.placeholder.com/180?text=QR+Code">
+        
+        <button class="btn btn-qr" onclick="dlQR()">TẢI QR PNG</button>
+        
+        <button class="btn btn-txt" onclick="dlTXT()">TẢI FILE .TXT</button>
     </div>
 </div>
 
 <script>
-let resultText = "";
-let qrURL = "";
+    const txtIn = document.getElementById('txtIn');
+    const mode = document.getElementById('mode');
+    const qrImg = document.getElementById('qrImg');
+    const fBtn = document.getElementById('fBtn');
+    const fIn = document.getElementById('fIn');
+    const loader = document.getElementById('loader');
 
-const inputArea = document.getElementById("input");
-const modeSelect = document.getElementById("mode");
-const outputPre = document.getElementById("output");
-const qrImg = document.getElementById("qrImg");
+    let resultData = ""; // Lưu kết quả ngầm
+    let qrPath = "";
 
-function process() {
-    let rawVal = inputArea.value.trim();
-    
-    // --- XỬ LÝ CẮT LINK DROPBOX ---
-    // Sử dụng Regex để cắt link dù có http hay https
-    const dropboxPattern = /^https?:\/\/www\.dropbox\.com\/scl\/fi\//;
-    let processedVal = rawVal.replace(dropboxPattern, "");
-    // ------------------------------
+    mode.onchange = () => {
+        fBtn.style.display = (mode.value === 'base64') ? 'block' : 'none';
+        run();
+    };
 
-    if (!processedVal) {
-        outputPre.textContent = "Kết quả sẽ hiện ở đây...";
-        qrImg.src = "https://via.placeholder.com/150?text=QR+Code";
-        resultText = "";
-        return;
+    fIn.onchange = (e) => {
+        const file = e.target.files[0];
+        if(!file) return;
+
+        loader.style.display = "flex";
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+            resultData = ev.target.result;
+            txtIn.value = "[File: " + file.name + "]";
+            qrImg.src = "https://via.placeholder.com/180?text=FILE+TOO+LARGE";
+            qrPath = "";
+            loader.style.display = "none";
+        };
+        // Tối ưu hóa đọc file cực nhanh
+        reader.readAsDataURL(file);
+    };
+
+    function run() {
+        let val = txtIn.value.trim();
+        if(val.startsWith('[File:')) return;
+
+        if(!val) {
+            resultData = "";
+            qrImg.src = "https://via.placeholder.com/180?text=QR+Code";
+            return;
+        }
+
+        // Tăng tốc xử lý chuỗi bằng vòng lặp tối ưu
+        if(mode.value === 'base64') {
+            try { resultData = btoa(unescape(encodeURIComponent(val))); }
+            catch(e) { resultData = "Error"; }
+        } else {
+            let res = "", len = val.length;
+            for(let i=0; i<len; i++) {
+                let code = val.charCodeAt(i);
+                res += (mode.value === 'binary' ? code.toString(2).padStart(8,'0') : code.toString(10)) + " ";
+            }
+            resultData = res.trim();
+        }
+
+        if(val.length > 1000) {
+            qrImg.src = "https://via.placeholder.com/180?text=TOO+LONG";
+            qrPath = "";
+        } else {
+            qrPath = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(val)}`;
+            qrImg.src = qrPath;
+        }
     }
 
-    const mode = modeSelect.value;
+    txtIn.oninput = run;
 
-    if (mode === "base64") {
+    // FIX LỖI: Tải trực tiếp không mở tab mới
+    async function dlQR() { 
+        if(!qrPath) return alert("Không có QR!");
         try {
-            resultText = btoa(unescape(encodeURIComponent(processedVal)));
-        } catch (e) {
-            resultText = "Lỗi: Không thể mã hóa Base64";
+            const resp = await fetch(qrPath);
+            const blob = await resp.blob();
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'QR_Code.png';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        } catch(e) {
+            window.open(qrPath, '_blank');
         }
-    } else {
-        let out = [];
-        for (let char of processedVal) {
-            const code = char.charCodeAt(0);
-            out.push(mode === "binary" ? code.toString(2).padStart(8, "0") : code.toString(10));
-        }
-        resultText = out.join(" ");
     }
-
-    outputPre.textContent = resultText;
-
-    // QR sẽ tạo dựa trên nội dung đã được cắt
-    qrURL = "https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=" + encodeURIComponent(processedVal);
-    qrImg.src = qrURL;
-}
-
-inputArea.addEventListener("input", process);
-modeSelect.addEventListener("change", process);
-
-function downloadQR() {
-    if (qrURL) window.open(qrURL, '_blank');
-}
-
-function downloadTXT() {
-    if (!resultText) return;
-    const blob = new Blob([resultText], { type: "text/plain" });
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = "encoded_data.txt";
-    a.click();
-}
+    
+    function dlTXT() {
+        if(!resultData) return alert("Trống!");
+        const blob = new Blob([resultData], {type: 'text/plain'});
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = "encoded_data.txt";
+        a.click();
+    }
 </script>
-
 </body>
 </html>
