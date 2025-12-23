@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
-<title>Text → Binary / Decimal + QR</title>
+<title>Text → Binary / Decimal / Base64 + QR</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
@@ -10,207 +10,191 @@
 
 body {
     margin: 0;
-    font-family: monospace;
-    background: linear-gradient(135deg, #4facfe, #11ff00);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #4facfe, #00f2fe);
     min-height: 100vh;
     padding: 40px 15px;
 }
 
 .app {
-    max-width: 920px;
+    max-width: 850px;
     margin: auto;
     background: #fff;
-    border-radius: 10px;
-    padding: 22px;
-    box-shadow: 0 25px 50px rgba(0,0,0,.25);
+    border-radius: 15px;
+    padding: 25px;
+    box-shadow: 0 25px 50px rgba(0,0,0,.15);
 }
 
 h2 {
     text-align: center;
-    margin-bottom: 18px;
+    margin-bottom: 20px;
+    color: #2d3436;
+    text-transform: uppercase;
+    letter-spacing: 1px;
 }
 
 textarea, select {
     width: 100%;
     display: block;
-    margin: 0 auto;
+    margin-bottom: 15px;
     padding: 12px;
-    border-radius: 10px;
+    border-radius: 8px;
     border: 1px solid #dcdde1;
     font-size: 14px;
+    outline: none;
 }
 
 textarea {
-    height: 100px;
+    height: 80px;
     resize: none;
-}
-
-select {
-    margin-top: 10px;
 }
 
 .main {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr 1.2fr;
     gap: 20px;
-    margin-top: 20px;
 }
 
-/* KHUNG GIỐNG NHAU */
 .box {
-    border: 2px dashed #b2bec3;
-    border-radius: 16px;
-    padding: 16px;
-}
-
-/* QR */
-.qr-box {
-    text-align: center;
+    border: 2px dashed #dfe6e9;
+    border-radius: 12px;
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
 }
 
 .qr-box img {
-    width: 160px;
-    height: 160px;
-    display: block;
-    margin: auto;
-}
-
-.qr-box button {
-    margin-top: 12px;
-    width: 100%;
-    padding: 10px;
-    border-radius: 10px;
-    border: none;
-    background: #6c5ce7;
-    color: #fff;
-    cursor: pointer;
-}
-
-/* OUTPUT */
-.output-box {
-    display: flex;
-    flex-direction: column;
+    width: 140px; 
+    height: 140px;
+    background: #f9f9f9;
+    margin-bottom: 15px;
 }
 
 pre {
-    flex: 1;
+    width: 100%;
     margin: 0;
-    background: #f5f6fa;
-    border-radius: 10px;
+    background: #2d3436;
+    color: #00ff00;
+    border-radius: 8px;
     padding: 12px;
-    overflow-y: auto;
-    font-size: 14px;
+    font-size: 13px;
+    font-family: 'Courier New', Courier, monospace;
     white-space: pre-wrap;
     word-break: break-all;
+    line-height: 1.5; 
+    max-height: calc(1.5em * 5 + 24px); 
+    overflow-y: auto;
 }
 
-.output-box button {
-    margin-top: 15px;
+button {
+    width: 100%;
     padding: 10px;
-    border-radius: 10px;
+    border-radius: 8px;
     border: none;
-    background: #00b894;
     color: #fff;
     cursor: pointer;
+    font-weight: bold;
+    transition: 0.3s;
+    margin-top: 10px;
 }
 
-/* MOBILE */
-@media (max-width: 700px) {
-    .main {
-        grid-template-columns: 1fr;
-    }
+.qr-box button { background: #6c5ce7; }
+.output-box button { background: #00b894; }
+button:hover { opacity: 0.9; transform: translateY(-2px); }
+
+@media (max-width: 600px) {
+    .main { grid-template-columns: 1fr; }
 }
 </style>
 </head>
-
 <body>
 
 <div class="app">
-<h2>squirrel's paw </h2>
+    <h2>Squirrel's Paw</h2>
 
-<textarea id="input" placeholder="Nhập text hoặc link Dropbox vô đây"></textarea>
+    <textarea id="input" placeholder="Nhập văn bản hoặc link..."></textarea>
 
-<select id="mode">
-    <option value="binary">Nhị phân (Binary)</option>
-    <option value="decimal">Thập phân (Decimal)</option>
-</select>
+    <select id="mode">
+        <option value="binary">Mã Nhị phân (Binary)</option>
+        <option value="decimal">Mã Thập phân (Decimal)</option>
+        <option value="base64">Mã Base64</option>
+    </select>
 
-<div class="main">
+    <div class="main">
+        <div class="box qr-box">
+            <img id="qrImg" src="https://via.placeholder.com/150?text=QR+Code" alt="QR Code">
+            <button onclick="downloadQR()">Tải QR PNG</button>
+        </div>
 
-    <!-- LEFT -->
-    <div class="box qr-box">
-        <img id="qrImg" src="">
-        <button onclick="downloadQR()">Download QR PNG</button>
+        <div class="box output-box">
+            <pre id="output">Kết quả sẽ hiện ở đây...</pre>
+            <button onclick="downloadTXT()">Tải File .TXT</button>
+        </div>
     </div>
-
-    <!-- RIGHT -->
-    <div class="box output-box">
-        <pre id="output"></pre>
-        <button onclick="downloadTXT()">Download TXT</button>
-    </div>
-
-</div>
 </div>
 
 <script>
-let result = "";
+let resultText = "";
 let qrURL = "";
 
-document.getElementById("input").addEventListener("input", convert);
-document.getElementById("mode").addEventListener("change", convert);
+const inputArea = document.getElementById("input");
+const modeSelect = document.getElementById("mode");
+const outputPre = document.getElementById("output");
+const qrImg = document.getElementById("qrImg");
 
-function convert() {
-    let text = document.getElementById("input").value.trim();
-
-    if (text.startsWith("https://www.dropbox.com/scl/fi/")) {
-        text = text.replace("https://www.dropbox.com/scl/fi/", "");
-    }
-
-    if (!text) {
-        result = "";
-        document.getElementById("output").textContent = "";
-        document.getElementById("qrImg").src = "";
+function process() {
+    const inputVal = inputArea.value.trim();
+    
+    if (!inputVal) {
+        outputPre.textContent = "Kết quả sẽ hiện ở đây...";
+        qrImg.src = "https://via.placeholder.com/150?text=QR+Code";
+        resultText = "";
         return;
     }
 
-    const mode = document.getElementById("mode").value;
-    let out = [];
+    const mode = modeSelect.value;
 
-    for (let char of text) {
-        const code = char.charCodeAt(0);
-        out.push(
-            mode === "binary"
-                ? code.toString(2).padStart(8, "0")
-                : code.toString(10)
-        );
+    if (mode === "base64") {
+        // Xử lý Base64 hỗ trợ Unicode (Tiếng Việt)
+        try {
+            // Encode chuỗi sang UTF-8 trước khi btoa
+            resultText = btoa(unescape(encodeURIComponent(inputVal)));
+        } catch (e) {
+            resultText = "Lỗi: Không thể mã hóa Base64";
+        }
+    } else {
+        // Xử lý Binary và Decimal
+        let out = [];
+        for (let char of inputVal) {
+            const code = char.charCodeAt(0);
+            out.push(mode === "binary" ? code.toString(2).padStart(8, "0") : code.toString(10));
+        }
+        resultText = out.join(" ");
     }
 
-    result = out.join(" ");
-    document.getElementById("output").textContent = result;
+    outputPre.textContent = resultText;
 
-    qrURL =
-        "https://api.qrserver.com/v1/create-qr-code/?size=160x160&format=png&data=" +
-        encodeURIComponent(result);
-
-    document.getElementById("qrImg").src = qrURL;
+    // 2. Cập nhật QR (Luôn dùng văn bản gốc để QR dễ quét hơn)
+    qrURL = "https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=" + encodeURIComponent(inputVal);
+    qrImg.src = qrURL;
 }
 
+inputArea.addEventListener("input", process);
+modeSelect.addEventListener("change", process);
+
 function downloadQR() {
-    if (!qrURL) return;
-    const a = document.createElement("a");
-    a.href = qrURL;
-    a.download = "qr_code.png";
-    a.click();
+    if (qrURL) window.open(qrURL, '_blank');
 }
 
 function downloadTXT() {
-    if (!result) return;
-    const blob = new Blob([result], { type: "text/plain" });
+    if (!resultText) return;
+    const blob = new Blob([resultText], { type: "text/plain" });
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
-    a.download = "encoded.txt";
+    a.download = "encoded_data.txt";
     a.click();
-    URL.revokeObjectURL(a.href);
 }
 </script>
 
