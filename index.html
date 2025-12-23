@@ -2,12 +2,12 @@
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
-<title>Text → Binary / Decimal / Base64 + QR</title>
+<title>Squirrel's Paw - Dropbox Link Processor</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
+/* ... Giữ nguyên phần CSS của bạn ... */
 * { box-sizing: border-box; }
-
 body {
     margin: 0;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -15,7 +15,6 @@ body {
     min-height: 100vh;
     padding: 40px 15px;
 }
-
 .app {
     max-width: 850px;
     margin: auto;
@@ -24,7 +23,6 @@ body {
     padding: 25px;
     box-shadow: 0 25px 50px rgba(0,0,0,.15);
 }
-
 h2 {
     text-align: center;
     margin-bottom: 20px;
@@ -32,7 +30,6 @@ h2 {
     text-transform: uppercase;
     letter-spacing: 1px;
 }
-
 textarea, select {
     width: 100%;
     display: block;
@@ -43,18 +40,8 @@ textarea, select {
     font-size: 14px;
     outline: none;
 }
-
-textarea {
-    height: 80px;
-    resize: none;
-}
-
-.main {
-    display: grid;
-    grid-template-columns: 1fr 1.2fr;
-    gap: 20px;
-}
-
+textarea { height: 80px; resize: none; }
+.main { display: grid; grid-template-columns: 1fr 1.2fr; gap: 20px; }
 .box {
     border: 2px dashed #dfe6e9;
     border-radius: 12px;
@@ -64,14 +51,7 @@ textarea {
     align-items: center;
     justify-content: space-between;
 }
-
-.qr-box img {
-    width: 140px; 
-    height: 140px;
-    background: #f9f9f9;
-    margin-bottom: 15px;
-}
-
+.qr-box img { width: 140px; height: 140px; background: #f9f9f9; margin-bottom: 15px; }
 pre {
     width: 100%;
     margin: 0;
@@ -87,7 +67,6 @@ pre {
     max-height: calc(1.5em * 5 + 24px); 
     overflow-y: auto;
 }
-
 button {
     width: 100%;
     padding: 10px;
@@ -99,14 +78,10 @@ button {
     transition: 0.3s;
     margin-top: 10px;
 }
-
 .qr-box button { background: #6c5ce7; }
 .output-box button { background: #00b894; }
 button:hover { opacity: 0.9; transform: translateY(-2px); }
-
-@media (max-width: 600px) {
-    .main { grid-template-columns: 1fr; }
-}
+@media (max-width: 600px) { .main { grid-template-columns: 1fr; } }
 </style>
 </head>
 <body>
@@ -114,7 +89,7 @@ button:hover { opacity: 0.9; transform: translateY(-2px); }
 <div class="app">
     <h2>Squirrel's Paw</h2>
 
-    <textarea id="input" placeholder="Nhập văn bản hoặc link..."></textarea>
+    <textarea id="input" placeholder="Dán link Dropbox vào đây..."></textarea>
 
     <select id="mode">
         <option value="binary">Mã Nhị phân (Binary)</option>
@@ -145,9 +120,15 @@ const outputPre = document.getElementById("output");
 const qrImg = document.getElementById("qrImg");
 
 function process() {
-    const inputVal = inputArea.value.trim();
+    let rawVal = inputArea.value.trim();
     
-    if (!inputVal) {
+    // --- XỬ LÝ CẮT LINK DROPBOX ---
+    // Sử dụng Regex để cắt link dù có http hay https
+    const dropboxPattern = /^https?:\/\/www\.dropbox\.com\/scl\/fi\//;
+    let processedVal = rawVal.replace(dropboxPattern, "");
+    // ------------------------------
+
+    if (!processedVal) {
         outputPre.textContent = "Kết quả sẽ hiện ở đây...";
         qrImg.src = "https://via.placeholder.com/150?text=QR+Code";
         resultText = "";
@@ -157,17 +138,14 @@ function process() {
     const mode = modeSelect.value;
 
     if (mode === "base64") {
-        // Xử lý Base64 hỗ trợ Unicode (Tiếng Việt)
         try {
-            // Encode chuỗi sang UTF-8 trước khi btoa
-            resultText = btoa(unescape(encodeURIComponent(inputVal)));
+            resultText = btoa(unescape(encodeURIComponent(processedVal)));
         } catch (e) {
             resultText = "Lỗi: Không thể mã hóa Base64";
         }
     } else {
-        // Xử lý Binary và Decimal
         let out = [];
-        for (let char of inputVal) {
+        for (let char of processedVal) {
             const code = char.charCodeAt(0);
             out.push(mode === "binary" ? code.toString(2).padStart(8, "0") : code.toString(10));
         }
@@ -176,8 +154,8 @@ function process() {
 
     outputPre.textContent = resultText;
 
-    // 2. Cập nhật QR (Luôn dùng văn bản gốc để QR dễ quét hơn)
-    qrURL = "https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=" + encodeURIComponent(inputVal);
+    // QR sẽ tạo dựa trên nội dung đã được cắt
+    qrURL = "https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=" + encodeURIComponent(processedVal);
     qrImg.src = qrURL;
 }
 
