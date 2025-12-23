@@ -27,7 +27,7 @@
     }
     h2 { text-align: center; color: #333; }
     
-    textarea, select, .btn, .modal-input {
+    textarea, select, .btn, .modal-input, .url-input {
         width: 100%;
         padding: 12px;
         border-radius: 8px;
@@ -36,7 +36,8 @@
         outline: none;
     }
 
-    #fBtn { background: #6c5ce7; color: white; display: none; font-weight: bold; border: none; cursor: pointer; }
+    #base64Extra { display: none; flex-direction: column; gap: 10px; }
+    #fBtn { background: #6c5ce7; color: white; font-weight: bold; border: none; cursor: pointer; }
     
     #status {
         font-size: 13px; text-align: center; font-weight: bold;
@@ -44,6 +45,7 @@
     }
     .status-success { color: #00b894; background: #e6faf5; }
     .status-wait { color: #e17055; background: #fff3f0; }
+    .status-error { color: #d63031; background: #fab1a0; }
 
     #qrSection {
         border: 2px dashed #ddd; border-radius: 12px; padding: 20px;
@@ -56,6 +58,7 @@
     .btn:active { transform: scale(0.98); }
     .btn-qr { background: #0984e3; margin-top: 8px; }
     .btn-txt { background: #00b894; margin-top: 8px; }
+    .btn-url { background: #e84393; }
 
     /* LOADER & MODAL OVERLAY */
     .overlay {
@@ -64,7 +67,6 @@
         display: none; justify-content: center; align-items: center; z-index: 1000;
     }
     
-    /* Box nhập tên file */
     .modal-box {
         background: white; padding: 20px; border-radius: 12px;
         width: 90%; max-width: 320px; text-align: center;
@@ -73,7 +75,6 @@
     .modal-box h3 { margin-bottom: 15px; font-size: 18px; color: #333; }
     .modal-btns { display: flex; gap: 10px; margin-top: 15px; }
 
-    /* Vòng xoay loading */
     .spin {
         width: 50px; height: 50px;
         border: 5px solid #f3f3f3; border-top: 5px solid #6c5ce7;
@@ -97,7 +98,7 @@
 
 <div id="loader" class="overlay" style="background: rgba(255,255,255,0.9); flex-direction: column;">
     <div class="spin"></div>
-    <p style="margin-top:15px; font-weight: bold; color: #6c5ce7;">⚡ Đang tăng tốc xử lý 500%...</p>
+    <p id="loaderText" style="margin-top:15px; font-weight: bold; color: #6c5ce7;">⚡ Đang xử lý...</p>
 </div>
 
 <div class="app-container">
@@ -106,15 +107,21 @@
     <select id="mode">
         <option value="binary">Mã Nhị phân</option>
         <option value="decimal">Mã Thập phân</option>
-        <option value="base64">Mã Base64 (Hỗ trợ File)</option>
+        <option value="base64">Mã Base64 (Hỗ trợ File/URL)</option>
     </select>
 
-    <input type="file" id="fIn" style="display:none">
-    <button id="fBtn" onclick="document.getElementById('fIn').click()">📁 CHỌN FILE ĐỂ MÃ HÓA</button>
+    <div id="base64Extra">
+        <input type="file" id="fIn" style="display:none">
+        <button id="fBtn" class="btn" onclick="document.getElementById('fIn').click()">📁 CHỌN FILE TỪ MÁY</button>
+        <div style="display: flex; gap: 5px;">
+            <input type="text" id="urlIn" class="url-input" placeholder="Dán link ảnh/video vào đây...">
+            <button class="btn btn-url" onclick="processUrl()" style="width: 80px;">TẢI</button>
+        </div>
+    </div>
     
     <div id="status"></div>
 
-    <textarea id="txtIn" placeholder="Dán nội dung tại đây..."></textarea>
+    <textarea id="txtIn" placeholder="Dán nội dung văn bản tại đây..."></textarea>
 
     <div id="qrSection">
         <img id="qrImg" src="https://via.placeholder.com/180?text=QR+READY">
@@ -128,9 +135,11 @@
     const txtIn = document.getElementById('txtIn');
     const mode = document.getElementById('mode');
     const qrSection = document.getElementById('qrSection');
-    const fBtn = document.getElementById('fBtn');
+    const base64Extra = document.getElementById('base64Extra');
     const fIn = document.getElementById('fIn');
+    const urlIn = document.getElementById('urlIn');
     const loader = document.getElementById('loader');
+    const loaderText = document.getElementById('loaderText');
     const status = document.getElementById('status');
     const qrImg = document.getElementById('qrImg');
     const modalName = document.getElementById('modalName');
@@ -141,44 +150,83 @@
 
     mode.onchange = () => {
         const isBase64 = (mode.value === 'base64');
-        fBtn.style.display = isBase64 ? 'block' : 'none';
+        base64Extra.style.display = isBase64 ? 'flex' : 'none';
         qrSection.style.display = isBase64 ? 'none' : 'flex';
         status.style.display = 'none';
         run();
     };
 
+    // Xử lý File từ máy
     fIn.onchange = (e) => {
         const file = e.target.files[0];
         if(!file) return;
+        handleFileConversion(file);
+    };
 
-        loader.style.display = "flex";
-        status.style.display = "block";
-        status.className = "status-wait";
-        status.innerText = "⏳ Đang trích xuất dữ liệu...";
+    // Xử lý Link URL (Ảnh/Video)
+    async function processUrl() {
+        const url = urlIn.value.trim();
+        if(!url) return alert("Vui lòng dán link!");
 
+        showLoading("🌐 Đang tải dữ liệu từ liên kết...");
+        
+        try {
+            const response = await fetch(url);
+            if (!response.ok) throw new Error("Không thể truy cập link này (Lỗi CORS hoặc link hỏng)");
+            
+            const blob = await response.blob();
+            // Tạo một file ảo từ blob để dùng lại hàm handle
+            const fileName = url.split('/').pop().split('#')[0].split('?')[0] || "file_tu_link";
+            const file = new File([blob], fileName, { type: blob.type });
+            
+            handleFileConversion(file);
+        } catch (error) {
+            loader.style.display = "none";
+            showStatus("❌ Lỗi: Không thể tải file. Link có thể chặn truy cập trực tiếp.", "status-error");
+            console.error(error);
+        }
+    }
+
+    function handleFileConversion(file) {
+        showLoading("⚡ Đang mã hóa dữ liệu 500%...");
+        
         const reader = new FileReader();
         reader.onload = (ev) => {
             setTimeout(() => {
                 resultData = ev.target.result;
-                txtIn.value = "[File: " + file.name + "]";
-                status.className = "status-success";
-                status.innerText = "✅ Đã tạo Base64 thành công!";
+                txtIn.value = "[Dữ liệu mã hóa: " + file.name + " (" + file.type + ")]";
+                showStatus("✅ Đã tạo Base64 thành công!", "status-success");
                 loader.style.display = "none";
-            }, 1500);
+            }, 1000);
+        };
+        reader.onerror = () => {
+            loader.style.display = "none";
+            showStatus("❌ Lỗi khi đọc file!", "status-error");
         };
         reader.readAsDataURL(file);
-    };
+    }
+
+    function showLoading(text) {
+        loaderText.innerText = text;
+        loader.style.display = "flex";
+    }
+
+    function showStatus(msg, className) {
+        status.className = className;
+        status.innerText = msg;
+        status.style.display = "block";
+    }
 
     function run() {
         let val = txtIn.value.trim();
-        if(val.startsWith('[File:')) return;
+        if(val.startsWith('[Dữ liệu')) return;
         if(!val) { resultData = ""; qrImg.src = "https://via.placeholder.com/180?text=QR+READY"; return; }
 
         if(mode.value === 'base64') {
             try { resultData = btoa(unescape(encodeURIComponent(val))); } catch(e) { resultData = "Error"; }
         } else {
-            let res = "", len = val.length;
-            for(let i=0; i<len; i++) {
+            let res = "";
+            for(let i=0; i<val.length; i++) {
                 let code = val.charCodeAt(i);
                 res += (mode.value === 'binary' ? code.toString(2).padStart(8,'0') : code.toString(10)) + " ";
             }
@@ -189,9 +237,8 @@
     }
     txtIn.oninput = run;
 
-    // QUẢN LÝ MODAL TÊN FILE
     function openModal() {
-        if(!resultData) return alert("Chưa có dữ liệu để tải!");
+        if(!resultData) return alert("Chưa có dữ liệu!");
         modalName.style.display = "flex";
         fileNameInput.focus();
     }
@@ -202,14 +249,9 @@
     }
 
     function confirmDownload() {
-        let name = fileNameInput.value.trim();
-        if(!name) {
-            alert("Vui lòng nhập tên file!");
-            return;
-        }
-        
+        let name = fileNameInput.value.trim() || "squirrel_data";
         closeModal();
-        loader.style.display = "flex";
+        showLoading("💾 Đang chuẩn bị file...");
         
         setTimeout(() => {
             const blob = new Blob([resultData], {type: 'text/plain'});
@@ -220,7 +262,7 @@
             a.click();
             document.body.removeChild(a);
             loader.style.display = "none";
-        }, 1200);
+        }, 800);
     }
 
     async function dlQR() { 
