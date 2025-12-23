@@ -1,380 +1,176 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Louis gif 🪙</title>
-    <style>
-        /* GIỮ NGUYÊN TOÀN BỘ CSS CỦA BẠN */
-        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-font-smoothing: antialiased; user-select: none; }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
-            min-height: 100vh; padding: 20px; color: #fff; overflow-x: hidden;
-        }
-
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes slideInFromTop { from { opacity: 0; transform: translateY(-30px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes scaleIn { from { opacity: 0; transform: scale(0.8); } to { opacity: 1; transform: scale(1); } }
-        @keyframes float { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-10px); } }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        @keyframes slideToast { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-
-        #toast-container { position: fixed; top: 20px; right: 20px; z-index: 999999; }
-        .toast {
-            background: rgba(255, 255, 255, 0.95); color: #333; padding: 12px 20px; border-radius: 10px; margin-bottom: 10px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3); display: flex; align-items: center; gap: 10px;
-            animation: slideToast 0.3s ease-out forwards; min-width: 280px; font-weight: 600; backdrop-filter: blur(10px);
-        }
-        .toast.success { border-left: 6px solid #2ecc71; }
-        .toast.error { border-left: 6px solid #e74c3c; }
-
-        .btn-gold { 
-            background: linear-gradient(135deg, #ffd700 0%, #ffed4e 50%, #ffd700 100%) !important;
-            background-size: 200% auto !important; border: none !important; color: #333 !important;
-            font-weight: 700 !important; text-transform: uppercase; cursor: pointer; 
-            transition: all 0.3s ease; display: inline-flex; justify-content: center; align-items: center; 
-            border-radius: 6px; padding: 8px 16px; font-size: 12px; height: 34px;
-            box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
-        }
-        .btn-gold:hover { background-position: right center !important; transform: translateY(-2px); }
-        .btn-loading { position: relative; color: transparent !important; pointer-events: none; }
-        .btn-loading::after { content: ""; position: absolute; width: 20px; height: 20px; top: 50%; left: 50%; margin: -10px 0 0 -10px; border: 3px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.8s linear infinite; }
-
-        .logo { width: 60px; height: 60px; margin: 0 auto 10px; background: #fff; border-radius: 50%; padding: 2px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); animation: float 3s ease-in-out infinite; }
-        .logo img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
-
-        .user-bar { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: rgba(0, 0, 0, 0.25); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 10px; margin-bottom: 20px; backdrop-filter: blur(10px); animation: slideInFromTop 0.5s ease; }
-        .user-circle { width: 28px; height: 28px; border-radius: 50%; background: #4facfe; border: 1.5px solid #fff; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; }
-
-        #auth-modal { 
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-            background: rgba(0,0,0,0.85); z-index: 100000; 
-            display: none; justify-content: center; align-items: center; 
-        }
-        #auth-modal.active { display: flex; }
-        .auth-card { background: rgba(255, 255, 255, 0.95); color: #333; border-radius: 14px; padding: 40px 30px; width: 340px; text-align: center; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3); backdrop-filter: blur(10px); animation: scaleIn 0.5s ease; }
-        .auth-card input { width: 100%; padding: 14px 18px; margin-bottom: 15px; border: 2px solid #e0e0e0; border-radius: 12px; font-size: 14px; background: #f8f9fa; outline: none; }
-        #auth-title { font-size: 24px; font-weight: 800; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 25px; }
-
-        .input-group { 
-            background: rgba(255, 255, 255, 0.9); border-radius: 12px; padding: 15px; border: 1px solid #ffd700; 
-            margin-bottom: 30px; display: flex; gap: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); animation: fadeIn 0.6s ease 0.2s backwards; 
-        }
-        .input-group input { background: #f8f9fa; border: 1px solid #ddd; color: #333; padding: 10px 15px; border-radius: 8px; outline: none; width: 100%; font-weight: 500; }
-
-        .gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
-        .card { background: rgba(255, 255, 255, 0.1); border-radius: 15px; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.2); animation: fadeIn 0.5s ease; position: relative; }
-        .img-box { width: 100%; height: 250px; cursor: pointer; position: relative; background: #000; overflow: hidden; }
-        
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 9999; justify-content: center; align-items: center; }
-        .modal.active { display: flex; animation: fadeIn 0.3s ease; }
-        .modal-content { max-width: 400px; width: 90%; background: #fff; color: #333; padding: 15px; border-radius: 15px; text-align: center; position: relative; overflow: hidden; }
-        
-        .gift-card { background: #fff; color: #333; padding: 25px; border-radius: 16px; width: 340px; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
-        .gift-card input { width: 100%; padding: 12px; margin: 15px 0; border: 2px solid #eee; border-radius: 8px; text-align: center; font-weight: bold; font-size: 16px; }
-
-        .watermark { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-30deg); font-size: 22px; font-weight: 900; color: rgba(255, 255, 255, 0.45); white-space: nowrap; pointer-events: none; z-index: 10; text-shadow: 2px 2px 4px rgba(0,0,0,0.6); display: none; border: 1.5px solid rgba(255, 255, 255, 0.2); padding: 8px 15px; }
-
-        .shop-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 10000; justify-content: center; align-items: center; }
-        .shop-modal.active { display: flex; animation: fadeIn 0.3s ease; }
-        .shop-card { background: #fff; color: #333; padding: 20px; border-radius: 16px; width: 340px; text-align: center; max-height: 80vh; overflow-y: auto; position: relative; }
-        .close-shop-btn { position: sticky; top: -10px; right: -10px; float: right; background: #ff4757; color: #fff; border: none; width: 30px; height: 30px; border-radius: 50%; font-weight: bold; cursor: pointer; z-index: 100; box-shadow: 0 2px 10px rgba(0,0,0,0.2); }
-        .shop-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; background: #f9f9f9; border-radius: 8px; margin-bottom: 8px; border: 1px solid #eee; }
-
-        .hidden { display: none !important; }
-        .credit { margin-top: 50px; text-align: center; font-size: 12px; opacity: 0.7; padding-bottom: 20px; }
-    </style>
+<meta charset="UTF-8">
+<title>Text → Binary / Decimal</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+body {
+    font-family: monospace;
+    background: #f5f6fa;
+    color: #2f3640;
+    padding: 20px;
+}
+.container {
+    max-width: 520px;
+    margin: auto;
+}
+h2 {
+    text-align: center;
+    color: #273c75;
+}
+textarea, input, select {
+    width: 100%;
+    background: #ffffff;
+    color: #2f3640;
+    border: 1px solid #dcdde1;
+    padding: 10px;
+    margin-top: 10px;
+    border-radius: 6px;
+}
+textarea {
+    height: 120px;
+    resize: none;
+}
+button {
+    width: 100%;
+    margin-top: 10px;
+    padding: 10px;
+    background: #40739e;
+    border: none;
+    color: #fff;
+    cursor: pointer;
+    border-radius: 6px;
+}
+button:hover {
+    background: #273c75;
+}
+pre {
+    background: #ffffff;
+    border: 1px solid #dcdde1;
+    padding: 10px;
+    margin-top: 10px;
+    white-space: pre-wrap;
+    word-break: break-all;
+    border-radius: 6px;
+    font-size: 13px;
+}
+.qr-box {
+    margin-top: 15px;
+    padding: 12px;
+    border: 1px dashed #dcdde1;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.qr-box img {
+    width: 160px;
+    height: 160px;
+    background: #fff;
+    padding: 6px;
+    border-radius: 6px;
+    border: 1px solid #dcdde1;
+}
+.qr-actions {
+    flex: 1;
+}
+</style>
 </head>
-<body oncontextmenu="return false;">
 
-    <div id="toast-container"></div>
+<body>
 
-    <div id="auth-modal" onclick="closeAuthModal()">
-        <div class="auth-card" onclick="event.stopPropagation()">
-            <div class="logo"><img src="https://i.supaimg.com/d96488d9-a049-4a87-9e6c-af26d4dede14.jpg"></div>
-            <h2 id="auth-title">ĐĂNG NHẬP</h2>
-            <input type="text" id="userIn" placeholder="tên người dùng hoặc email">
-            <input type="password" id="passIn" placeholder="Mật khẩu">
-            <div id="emailField" style="display:none;">
-                <input type="email" id="emailIn" placeholder="Email của bạn">
+<div class="container">
+
+<h2>Text → Binary / Decimal</h2>
+
+<textarea id="input" placeholder="Nhập văn bản vô đây"></textarea>
+<input id="filename" placeholder="Tên file (txt hoặc png)">
+
+<select id="mode">
+    <option value="binary">Nhị phân (Binary)</option>
+    <option value="decimal">Thập phân (Decimal)</option>
+</select>
+
+<select id="exportType">
+    <option value="txt">tải xuống file TXT</option>
+    <option value="qr">tải xuống QR PNG</option>
+</select>
+
+<button onclick="convert()">Chuyển đổi</button>
+<button onclick="exportData()">tải xuống</button>
+
+<pre id="output"></pre>
+
+<div id="qr"></div>
+
+</div>
+
+<script>
+let result = "";
+
+function convert() {
+    const text = document.getElementById("input").value;
+    const mode = document.getElementById("mode").value;
+    let out = [];
+
+    for (let char of text) {
+        let code = char.charCodeAt(0);
+        out.push(
+            mode === "binary"
+                ? code.toString(2).padStart(8, "0")
+                : code.toString(10)
+        );
+    }
+
+    result = out.join(" ");
+    document.getElementById("output").textContent = result;
+    document.getElementById("qr").innerHTML = "";
+}
+
+function exportData() {
+    if (!result) {
+        alert("Chưa có dữ liệu.");
+        return;
+    }
+
+    const type = document.getElementById("exportType").value;
+    let name = document.getElementById("filename").value.trim() || "encoded";
+
+    if (type === "txt") {
+        if (!name.endsWith(".txt")) name += ".txt";
+        const blob = new Blob([result], { type: "text/plain" });
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = name;
+        a.click();
+        URL.revokeObjectURL(a.href);
+    } else {
+        if (!name.endsWith(".png")) name += ".png";
+
+        const url =
+            "https://api.qrserver.com/v1/create-qr-code/?size=160x160&format=png&data=" +
+            encodeURIComponent(result);
+
+        document.getElementById("qr").innerHTML = `
+            <div class="qr-box">
+                <img src="${url}">
+                <div class="qr-actions">
+                    <div>QR Code (PNG)</div>
+                    <button onclick="downloadQR('${url}','${name}')">Download</button>
+                </div>
             </div>
-            <button class="btn-gold" onclick="handleAuth()" id="authBtn" style="width:100%">TRUY CẬP</button>
-            <p id="toggleText" style="margin-top:25px; cursor:pointer; font-size:13px; color:#667eea;" onclick="toggleAuth()">Chưa có tài khoản? Đăng ký</p>
-            <p style="margin-top:15px; font-size:11px; color:#aaa; cursor:pointer;" onclick="closeAuthModal()">ĐÓNG</p>
-        </div>
-    </div>
+        `;
+    }
+}
 
-    <div class="container" style="max-width: 1200px; margin: 0 auto;">
-        <div id="userBar" class="user-bar">
-            <div style="display:flex; align-items:center; gap:8px;">
-                <div class="user-circle" id="uCircle">?</div>
-                <span id="uName" style="font-size: 13px;">Khách</span>
-            </div>
-            
-            <div style="display:flex; align-items:center; gap:8px;">
-                <div id="xuDisplay" class="hidden" style="color: #ffd700; font-weight: bold; margin-right: 5px; font-size: 13px;">🪙 <span id="uXu">0</span></div>
-                
-                <button class="btn-gold" style="height:28px; padding:0 10px; font-size:10px;" onclick="openGiftModal()">nhập code</button>
-                <button class="btn-gold" style="height:28px; padding:0 10px; font-size:10px; background: #ff4757 !important; color:#fff !important;" onclick="openShop()">shop</button>
-                
-                <button id="loginBtnNav" class="btn-gold" style="height:28px; padding:0 15px; font-size:10px;" onclick="openAuthModal()">ĐĂNG NHẬP</button>
-                
-                <button id="logoutBtn" class="hidden" onclick="location.reload()" style="background:none; border:none; color:#ff4757; cursor:pointer; font-size:10px;">THOÁT</button>
-            </div>
-        </div>
+function downloadQR(url, name) {
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = name;
+    a.click();
+}
+</script>
 
-        <div style="text-align:center; margin-bottom: 25px;">
-            <div class="logo"><img src="https://i.supaimg.com/d96488d9-a049-4a87-9e6c-af26d4dede14.jpg"></div>
-            <h1 style="color:#ffd700; font-size: 22px;">gift Louis</h1>
-            <p style="font-size: 12px; color: #eee; margin-top: 5px;">follow @vntng2104 - nhận 1 code xu</p>
-        </div>
-
-        <div class="input-group">
-            <input type="text" id="codeInput" placeholder="nhập mã ảnh tại đây...">
-            <button class="btn-gold" onclick="addImage()">XEM ẢNH</button>
-        </div>
-
-        <div id="gallery" class="gallery">
-            <p id="emptyMsg" style="grid-column: 1/-1; text-align: center; opacity: 0.5;">Nhập mã ảnh để bắt đầu xem..</p>
-        </div>
-
-        <div class="credit">
-            <hr style="opacity: 0.2; margin-bottom: 15px;">
-            <p>© 2026 Premium. All rights reserved.</p>
-        </div>
-    </div>
-
-    <div id="imgModal" class="modal" onclick="closeModal()">
-        <div class="modal-content" onclick="event.stopPropagation()">
-            <div id="wm" class="watermark">©2026louis_gif</div>
-            <img id="fullImage" src="" style="max-width:100%; border-radius:10px; margin-bottom:15px; display:block; pointer-events: none;">
-            <div id="buySection">
-                <button class="btn-gold" style="width:100%;" onclick="startPurchase()" id="purchaseBtn">dùng_<span id="photoPrice"></span> 🪙 xu để xem</button>
-            </div>
-            <p style="margin-top:15px; font-size:10px; color:#888; cursor:pointer;" onclick="closeModal()">ĐÓNG</p>
-        </div>
-    </div>
-
-    <div id="shopModal" class="shop-modal" onclick="closeShop()">
-        <div class="shop-card" onclick="event.stopPropagation()">
-            <button class="close-shop-btn" onclick="closeShop()">X</button>
-            <p style="font-weight:bold; margin-bottom:15px; padding-right: 30px;">SHOP MÃ ẢNH 🪙🪙</p>
-            <div id="shopList"></div>
-            <p style="margin-top:15px; font-size:11px; color:#888; cursor:pointer;" onclick="closeShop()">ĐÓNG</p>
-        </div>
-    </div>
-
-    <div id="giftModal" class="modal" onclick="closeGiftModal()">
-        <div class="gift-card" onclick="event.stopPropagation()">
-            <h3 style="color:#764ba2">nhập gifcode</h3>
-            <p style="font-size: 12px; color: #666;">inbox@vntng2104 để nhận gifcode</p>
-            <input type="text" id="giftInput" placeholder="nhập code tại đây..">
-            <button class="btn-gold" id="btnConfirmGift" onclick="handleRedeem()" style="width:100%">XÁC NHẬN</button>
-            <p style="margin-top:15px; font-size:11px; color:#aaa; cursor:pointer;" onclick="closeGiftModal()">HỦY BỎ</p>
-        </div>
-    </div>
-
-    <script>
-        const apiURL = 'https://sheetdb.io/api/v1/48pxhthfzxbjh'; 
-        const giftAPI = 'https://sheetdb.io/api/v1/pu93fw6k2wob6'; 
-        const photoPriceAPI = 'https://sheetdb.io/api/v1/hm1plgj9mb4lw'; 
-
-        let currentUser = null;
-        let isRegister = false;
-        let currentPhoto = { code: '', url: '', price: 0, cardEl: null };
-        let unlockedPhotos = [];
-
-        function showToast(msg, type = 'success') {
-            const container = document.getElementById('toast-container');
-            const toast = document.createElement('div');
-            toast.className = `toast ${type}`;
-            toast.innerHTML = (type === 'success' ? '✅ ' : '❌ ') + msg;
-            container.appendChild(toast);
-            setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 300); }, 2000);
-        }
-
-        function requireLogin() {
-            if (!currentUser) {
-                showToast("Bạn chưa đăng nhập hoặc đăng ký tài khoản", "error");
-                openAuthModal();
-                return false;
-            }
-            return true;
-        }
-
-        function openAuthModal() { document.getElementById('auth-modal').classList.add('active'); }
-        function closeAuthModal() { document.getElementById('auth-modal').classList.remove('active'); }
-
-        function toggleAuth() {
-            isRegister = !isRegister;
-            document.getElementById('auth-title').innerText = isRegister ? "TẠO TÀI KHOẢN" : "ĐĂNG NHẬP";
-            document.getElementById('userIn').placeholder = isRegister ? "Tên người dùng" : "Tên người dùng hoặc Email";
-            document.getElementById('emailField').style.display = isRegister ? "block" : "none";
-            document.getElementById('toggleText').innerText = isRegister ? "Đã có tài khoản? Đăng nhập" : "Chưa có tài khoản? Đăng ký";
-        }
-
-        async function handleAuth() {
-            const loginIn = document.getElementById('userIn').value.trim();
-            const passIn = document.getElementById('passIn').value.trim();
-            const emailIn = document.getElementById('emailIn').value.trim();
-            if(!loginIn || !passIn) return showToast("Vui lòng nhập đủ!", "error");
-            const btn = document.getElementById('authBtn');
-            btn.classList.add('btn-loading');
-            try {
-                const res = await fetch(apiURL);
-                const data = await res.json();
-                const user = data.find(x => x.username === loginIn || x.email === loginIn);
-                if(isRegister) {
-                    if(data.find(x => x.username === loginIn || x.email === emailIn)) {
-                        showToast("Tên hoặc Email đã tồn tại!", "error");
-                    } else {
-                        await fetch(apiURL, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({data:[{username:loginIn, password:passIn, email:emailIn, xu:10, usedCodes:''}]}) });
-                        showToast("Đăng ký thành công!"); toggleAuth();
-                    }
-                } else {
-                    if(user && user.password === passIn) {
-                        currentUser = user;
-                        // Ép kiểu xu về số ngay khi đăng nhập
-                        currentUser.xu = parseInt(user.xu) || 0;
-                        
-                        closeAuthModal();
-                        document.getElementById('loginBtnNav').classList.add('hidden');
-                        document.getElementById('xuDisplay').classList.remove('hidden');
-                        document.getElementById('logoutBtn').classList.remove('hidden');
-                        document.getElementById('uName').innerText = user.username;
-                        document.getElementById('uXu').innerText = currentUser.xu;
-                        document.getElementById('uCircle').innerText = user.username.charAt(0).toUpperCase();
-                        showToast("Đăng nhập thành công!");
-                    } else showToast("Sai thông tin!", "error");
-                }
-            } catch(e) { showToast("Lỗi kết nối!", "error"); } finally { btn.classList.remove('btn-loading'); }
-        }
-
-        async function addImage() {
-            if (!requireLogin()) return;
-            const code = document.getElementById('codeInput').value.trim();
-            if(!code) return;
-            if(unlockedPhotos.includes(code)) return showToast("Mã này đã nhập rồi!", "error");
-            const btn = document.querySelector('.input-group button');
-            btn.classList.add('btn-loading');
-            const finalUrl = code.length <= 10 ? `https://bom.so/${code}` : `https://pbs.twimg.com/media/${code}?format=jpg&name=orig`;
-            try {
-                const res = await fetch(`${photoPriceAPI}/search?code=${encodeURIComponent(code)}`);
-                const data = await res.json();
-                if (data.length > 0) {
-                    const fixedPrice = parseInt(data[0].price) || 0;
-                    unlockedPhotos.push(code);
-                    document.getElementById('emptyMsg').classList.add('hidden');
-                    const card = document.createElement('div');
-                    card.className = 'card locked';
-                    card.setAttribute('data-price', fixedPrice);
-                    card.innerHTML = `<div class="img-box" onclick="openModalView('${code}', '${finalUrl}', this)"><img src="${finalUrl}" loading="lazy" style="width:100%;height:100%;object-fit:cover;filter:blur(25px);opacity:0.6;"><div class="status-text" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:10px;font-weight:bold;text-align:center;">CHẠM ĐỂ XEM (${fixedPrice} XU)</div></div>`;
-                    document.getElementById('gallery').prepend(card);
-                    document.getElementById('codeInput').value = '';
-                } else showToast("Mã không tồn tại!", "error");
-            } catch(e) { showToast("Lỗi tải!", "error"); } finally { btn.classList.remove('btn-loading'); }
-        }
-
-        async function openShop() {
-            if (!requireLogin()) return;
-            document.getElementById('shopModal').classList.add('active');
-            const list = document.getElementById('shopList');
-            list.innerHTML = "Đang tải...";
-            try {
-                const res = await fetch(photoPriceAPI);
-                let codes = await res.json();
-                codes.sort(() => Math.random() - 0.5);
-                list.innerHTML = codes.map(i => `<div class="shop-item"><div style="text-align:left"><b>${i.code}</b><br><small style="color:#ffd700">${i.price} 🪙</small></div><button class="btn-gold" style="height:25px;font-size:9px;" onclick="copyShop('${i.code}')">COPY</button></div>`).join('');
-            } catch(e) { list.innerHTML = "Lỗi tải mã!"; }
-        }
-
-        function openGiftModal() { 
-            if (!requireLogin()) return;
-            document.getElementById('giftModal').classList.add('active'); 
-            document.getElementById('giftInput').value = '';
-        }
-
-        async function updateData(newXu, usedCodesString) {
-            // Đảm bảo newXu luôn là số trước khi gửi đi và hiển thị
-            const numericXu = parseInt(newXu);
-            if (isNaN(numericXu)) return showToast("Lỗi dữ liệu số!", "error");
-
-            await fetch(`${apiURL}/username/${currentUser.username}`, { 
-                method:'PATCH', 
-                headers:{'Content-Type':'application/json'}, 
-                body:JSON.stringify({data:{ xu: numericXu, usedCodes: usedCodesString }}) 
-            });
-            
-            currentUser.xu = numericXu; 
-            document.getElementById('uXu').innerText = numericXu;
-        }
-
-        async function handleRedeem() {
-            const codeInput = document.getElementById('giftInput').value.trim().toUpperCase();
-            if(!codeInput) return;
-            const btn = document.getElementById('btnConfirmGift');
-            btn.classList.add('btn-loading');
-            try {
-                const res = await fetch(giftAPI);
-                const data = await res.json();
-                const gift = data.find(g => g.code.trim().toUpperCase() === codeInput && g.status === 'active');
-                if (gift) {
-                    const currentBalance = parseInt(currentUser.xu) || 0;
-                    const bonus = parseInt(gift.amount) || 0;
-                    await updateData(currentBalance + bonus, currentUser.usedCodes);
-                    await fetch(`${giftAPI}/code/${gift.code}`, { method: 'DELETE' });
-                    showToast(`Thành công +${gift.amount} xu!`); closeGiftModal();
-                } else showToast("Mã sai hoặc đã dùng!", "error");
-            } catch (e) { showToast("Lỗi!", "error"); } finally { btn.classList.remove('btn-loading'); }
-        }
-
-        function openModalView(code, url, el) {
-            const price = parseInt(el.parentElement.getAttribute('data-price')) || 0;
-            currentPhoto = { code, url, price, cardEl: el.parentElement };
-            document.getElementById('fullImage').src = url;
-            document.getElementById('photoPrice').innerText = price;
-            const isLocked = currentPhoto.cardEl.classList.contains('locked');
-            document.getElementById('fullImage').style.filter = isLocked ? "blur(18px)" : "none";
-            document.getElementById('wm').style.display = isLocked ? "none" : "block";
-            document.getElementById('buySection').style.display = isLocked ? "block" : "none";
-            document.getElementById('imgModal').classList.add('active');
-        }
-
-        async function startPurchase() {
-            if (!requireLogin()) return;
-            
-            // Ép kiểu chắc chắn trước khi so sánh và tính toán
-            const userBalance = parseInt(currentUser.xu) || 0;
-            const photoCost = parseInt(currentPhoto.price) || 0;
-
-            if(userBalance < photoCost) return showToast("Không đủ xu!", "error");
-            
-            const btn = document.getElementById('purchaseBtn'); 
-            btn.classList.add('btn-loading');
-            
-            try {
-                // Tính toán số dư mới
-                const newBalance = userBalance - photoCost;
-                await updateData(newBalance, currentUser.usedCodes);
-                
-                currentPhoto.cardEl.classList.remove('locked');
-                currentPhoto.cardEl.querySelector('.status-text').innerHTML = "ĐÃ MUA ✅";
-                document.getElementById('wm').style.display = 'block';
-                document.getElementById('fullImage').style.filter = "none";
-                document.getElementById('buySection').style.display = "none";
-                showToast("Đã mở khóa ảnh!");
-            } catch(e) { 
-                showToast("Lỗi hệ thống!", "error"); 
-            } finally { 
-                btn.classList.remove('btn-loading'); 
-            }
-        }
-
-        function copyShop(c) { navigator.clipboard.writeText(c).then(() => showToast("Đã copy mã!")); }
-        function closeShop() { document.getElementById('shopModal').classList.remove('active'); }
-        function closeModal() { document.getElementById('imgModal').classList.remove('active'); }
-        function closeGiftModal() { document.getElementById('giftModal').classList.remove('active'); }
-    </script>
 </body>
 </html>
