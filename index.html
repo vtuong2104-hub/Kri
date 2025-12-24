@@ -3,161 +3,216 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Squirrel's Paw - Ultimate Encoder v5</title>
+<title>Squirrel's Paw - Pro Converter v7</title>
 <style>
+    :root {
+        --primary-color: #6c5ce7;
+        --secondary-color: #00b894;
+        --accent-color: #e84393;
+        --download-color: #ff7675;
+        --bg-color: #f0f2f5;
+    }
+
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; display: flex; flex-direction: column; align-items: center; padding: 20px; }
-    .app-container { width: 100%; max-width: 420px; background: white; padding: 25px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); display: flex; flex-direction: column; gap: 15px; }
+    body { 
+        font-family: 'Segoe UI', sans-serif; 
+        background: var(--bg-color); 
+        display: flex; justify-content: center; align-items: center; 
+        min-height: 100vh; padding: 20px; 
+    }
+
+    .app-container { 
+        width: 100%; max-width: 450px; background: white; 
+        padding: 30px; border-radius: 24px; 
+        box-shadow: 0 20px 40px rgba(0,0,0,0.08); 
+        display: flex; flex-direction: column; gap: 15px; 
+    }
+
+    h2 { text-align: center; color: #2d3436; font-size: 24px; }
+    select, .btn, .url-input, textarea, .modal-input { 
+        width: 100%; padding: 14px; border-radius: 12px; 
+        border: 1.5px solid #eee; font-size: 15px; outline: none; 
+    }
+
+    .url-group { display: flex; gap: 10px; }
+    .btn-url { background: var(--accent-color); color: white; border: none; font-weight: bold; cursor: pointer; width: 100px; }
+    #fBtn { background: var(--primary-color); color: white; border: none; font-weight: 600; cursor: pointer; }
+    .btn-main { background: var(--secondary-color); color: white; border: none; font-weight: bold; cursor: pointer; padding: 16px; font-size: 16px; }
     
-    h2 { text-align: center; color: #333; margin-bottom: 5px; }
-    select, .btn, .url-input, textarea, .modal-input { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #ddd; font-size: 14px; outline: none; }
-    
-    .url-group { display: flex; gap: 8px; }
-    .btn-url { background: #e84393; width: 90px; color: white; font-weight: bold; border: none; cursor: pointer; border-radius: 10px; }
-    #fBtn { background: #6c5ce7; color: white; font-weight: bold; border: none; cursor: pointer; }
-    .btn-main { background: #00b894; color: white; border: none; font-weight: bold; cursor: pointer; padding: 15px; }
-    .btn-qr { background: #0984e3; color: white; border: none; width: auto; padding: 10px 20px; margin-top: 10px; cursor: pointer; border-radius: 8px; }
+    /* Nút tải video TikTok mới */
+    #btnDownloadOrigin { 
+        background: var(--download-color); color: white; border: none; 
+        font-weight: bold; cursor: pointer; padding: 16px; font-size: 16px;
+        display: none; /* Ẩn mặc định */
+        transition: all 0.3s;
+    }
 
-    .progress-container { width: 100%; background: #eee; border-radius: 10px; height: 10px; display: none; overflow: hidden; margin-top: 5px; }
-    #progressBar { width: 0%; height: 100%; background: #6c5ce7; transition: width 0.1s; }
-    #progressText { font-size: 11px; text-align: center; color: #6c5ce7; display: none; font-weight: bold; }
+    /* Progress Bar */
+    .progress-wrapper { display: none; margin: 10px 0; }
+    .progress-label { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 13px; font-weight: 600; color: var(--primary-color); }
+    .progress-container { width: 100%; background: #e9ecef; border-radius: 20px; height: 18px; overflow: hidden; }
+    #progressBar { 
+        width: 0%; height: 100%; 
+        background: linear-gradient(45deg, var(--primary-color) 25%, #a29bfe 25%, #a29bfe 50%, var(--primary-color) 50%, var(--primary-color) 75%, #a29bfe 75%, #a29bfe);
+        background-size: 40px 40px; animation: progress-bar-stripes 1s linear infinite; border-radius: 20px;
+    }
+    @keyframes progress-bar-stripes { from { background-position: 40px 0; } to { background-position: 0 0; } }
 
-    #status { font-size: 12px; text-align: center; font-weight: bold; display: none; padding: 10px; border-radius: 8px; }
-    .status-success { color: #00b894; background: #e6faf5; }
-    .status-error { color: #d63031; background: #fab1a0; }
+    #status { font-size: 13px; text-align: center; font-weight: 500; display: none; padding: 12px; border-radius: 10px; }
+    .status-success { color: #009432; background: #e8f5e9; }
+    .status-error { color: #c0392b; background: #fdf2f2; }
+    textarea { background: #fafafa; color: #636e72; resize: none; font-family: monospace; font-size: 11px; }
 
-    #qrSection { border: 2px dashed #ddd; border-radius: 15px; padding: 20px; display: flex; flex-direction: column; align-items: center; background: #fafafa; }
-    #qrImg { width: 160px; height: 160px; background: white; border: 1px solid #eee; object-fit: contain; }
-
-    .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: none; justify-content: center; align-items: center; z-index: 1000; flex-direction: column; color: white; }
-    .modal-box { background: white; padding: 25px; border-radius: 15px; width: 90%; max-width: 350px; text-align: center; color: #333; }
-    @keyframes spin { to { transform: rotate(360deg); } }
+    .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: none; justify-content: center; align-items: center; z-index: 1000; flex-direction: column; color: white; backdrop-filter: blur(4px); }
+    .modal-box { background: white; padding: 30px; border-radius: 20px; width: 90%; max-width: 380px; text-align: center; color: #2d3436; }
 </style>
 </head>
 <body>
 
 <div id="loader" class="overlay">
-    <div style="width: 45px; height: 45px; border: 5px solid #f3f3f3; border-top: 5px solid #6c5ce7; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 15px;"></div>
-    <b id="loaderText">Đang tải dữ liệu...</b>
+    <div style="width: 40px; height: 40px; border: 4px solid rgba(255,255,255,0.3); border-top: 4px solid white; border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 15px;"></div>
+    <b id="loaderText">Đang xử lý...</b>
 </div>
 
 <div class="app-container">
-    <h2>Squirrel's Paw v5</h2>
+    <h2>Squirrel's Paw v7</h2>
 
     <select id="mode">
-        <option value="binary">Mã Nhị phân (Binary)</option>
-        <option value="decimal">Mã Thập phân (Decimal)</option>
-        <option value="base64">Mã Base64</option>
+        <option value="binary">Chuyển sang Nhị phân (Binary)</option>
+        <option value="decimal">Chuyển sang Thập phân (Decimal)</option>
+        <option value="base64">Chuyển sang Base64</option>
     </select>
 
     <div class="url-group">
-        <input type="text" id="urlIn" class="url-input" placeholder="Dán link TikTok hoặc Video/MP3...">
-        <button class="btn-url" onclick="processUrl()">MÃ HÓA</button>
+        <input type="text" id="urlIn" class="url-input" placeholder="Dán link TikTok tại đây...">
+        <button class="btn btn-url" onclick="processUrl()">MÃ HÓA</button>
     </div>
 
-    <button id="fBtn" class="btn" onclick="document.getElementById('fIn').click()">📁 CHỌN FILE TỪ MÁY</button>
+    <button id="fBtn" class="btn" onclick="document.getElementById('fIn').click()">📁 CHỌN FILE TỪ THIẾT BỊ</button>
     <input type="file" id="fIn" style="display:none">
 
-    <div class="progress-container" id="pCont"><div id="progressBar"></div></div>
-    <p id="progressText">0%</p>
-
-    <div id="status"></div>
-
-    <textarea id="txtIn" rows="4" placeholder="Nhập văn bản tạo QR hoặc kết quả file..."></textarea>
-
-    <div id="qrSection">
-        <img id="qrImg" src="https://via.placeholder.com/160?text=QR+CODE">
-        <button class="btn-qr" onclick="dlQR()">TẢI MÃ QR</button>
-        <p id="qrError" style="color:red; font-size:10px; margin-top:8px; display:none; text-align:center;">QR không hỗ trợ nội dung quá dài!<br>Vui lòng dùng nút Xuất File TXT.</p>
+    <div class="progress-wrapper" id="pWrapper">
+        <div class="progress-label"><span id="pFileName">File...</span><span id="pPercentage">0%</span></div>
+        <div class="progress-container"><div id="progressBar"></div></div>
     </div>
 
-    <button class="btn btn-main" onclick="openDownloadModal()">XUẤT FILE VĂN BẢN (.TXT)</button>
+    <div id="status"></div>
+    <textarea id="txtIn" rows="4" readonly placeholder="Thông tin mã hóa..."></textarea>
+
+    <button class="btn btn-main" onclick="openModal()">XUẤT FILE VĂN BẢN (.TXT)</button>
+    
+    <button id="btnDownloadOrigin" class="btn" onclick="downloadOriginFile()">📥 TẢI VIDEO/ẢNH GỐC (TIKTOK)</button>
 </div>
 
 <div id="modalName" class="overlay">
     <div class="modal-box">
-        <h3>📂 Đặt tên file lưu trữ</h3>
+        <h3>📂 Đặt tên file .txt</h3>
         <input type="text" id="fileNameInput" class="modal-input" placeholder="Tên file..." style="margin-top:15px;">
-        <div style="display:flex; gap:10px; margin-top:20px;">
-            <button class="btn" onclick="closeModal()">HỦY</button>
-            <button class="btn" style="background:#6c5ce7; color:white;" onclick="confirmDownload()">TẢI XUỐNG</button>
+        <div style="display:flex; gap:10px; margin-top:25px;">
+            <button class="btn" style="background:#dfe6e9;" onclick="closeModal()">HỦY</button>
+            <button class="btn" style="background:var(--primary-color); color:white;" onclick="confirmDownload()">TẢI XUỐNG</button>
         </div>
     </div>
 </div>
 
 <script>
-    const mode = document.getElementById('mode');
-    const txtIn = document.getElementById('txtIn');
-    const fIn = document.getElementById('fIn');
     const urlIn = document.getElementById('urlIn');
-    const pCont = document.getElementById('pCont');
+    const pWrapper = document.getElementById('pWrapper');
     const pBar = document.getElementById('progressBar');
-    const pText = document.getElementById('progressText');
-    const qrImg = document.getElementById('qrImg');
-    const qrError = document.getElementById('qrError');
-    const loader = document.getElementById('loader');
+    const pPercent = document.getElementById('pPercentage');
+    const pFileName = document.getElementById('pFileName');
     const status = document.getElementById('status');
+    const loader = document.getElementById('loader');
+    const btnDownloadOrigin = document.getElementById('btnDownloadOrigin');
 
     let resultData = "";
-    let qrPath = "";
+    let originFileUrl = ""; // Lưu link tải trực tiếp
 
-    // 1. XỬ LÝ TỪ LINK (TikTok/MP3/Video)
     async function processUrl() {
         const url = urlIn.value.trim();
-        if(!url) return alert("Vui lòng dán link!");
+        if(!url) return alert("Hãy dán link!");
+        
+        btnDownloadOrigin.style.display = 'none'; // Ẩn nút tải gốc khi bắt đầu mới
+        showLoader("🔍 Đang trích xuất dữ liệu TikTok...");
 
-        showLoader("🔍 Đang trích xuất dữ liệu...");
         try {
             let finalUrl = url;
-            // Hỗ trợ TikTok
             if (url.includes("tiktok.com") || url.includes("douyin.com")) {
                 const api = await fetch(`https://www.tikwm.com/api/?url=${encodeURIComponent(url)}`);
                 const res = await api.json();
-                if (res.data && res.data.play) finalUrl = res.data.play;
-                else throw new Error("Không lấy được link video.");
+                if (res.data && res.data.play) {
+                    finalUrl = res.data.play;
+                    originFileUrl = finalUrl; // Lưu lại để tải
+                    btnDownloadOrigin.style.display = 'block'; // Hiện nút tải gốc
+                } else {
+                    throw new Error("Không tìm thấy video. Link có thể bị lỗi hoặc riêng tư.");
+                }
             }
 
-            showLoader("📥 Đang tải file về bộ nhớ tạm...");
+            showLoader("📥 Đang tải dữ liệu về...");
             const response = await fetch(finalUrl);
-            if(!response.ok) throw new Error("Server chặn tải trực tiếp.");
-            
             const blob = await response.blob();
-            processBuffer(blob, "Link_Data");
+            processBuffer(blob, "TikTok_Video");
         } catch (e) {
             hideLoader();
             showStatus("❌ Lỗi: " + e.message, "status-error");
         }
     }
 
-    // 2. XỬ LÝ TỪ CHỌN FILE
-    fIn.onchange = (e) => {
+    // Hàm tải video gốc về máy
+    async function downloadOriginFile() {
+        if (!originFileUrl) return;
+        showLoader("🚀 Đang chuẩn bị tải video...");
+        try {
+            const response = await fetch(originFileUrl);
+            const blob = await response.blob();
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = "tiktok_origin_" + Date.now() + ".mp4";
+            link.click();
+            hideLoader();
+        } catch (e) {
+            hideLoader();
+            alert("Lỗi khi tải file gốc. Bạn có thể mở link trực tiếp: " + originFileUrl);
+        }
+    }
+
+    // Chọn file từ máy
+    document.getElementById('fIn').onchange = (e) => {
         const file = e.target.files[0];
-        if (file) processBuffer(file, file.name);
+        if (file) {
+            btnDownloadOrigin.style.display = 'none';
+            processBuffer(file, file.name);
+        }
     };
 
-    // HÀM CHUNG: Chuyển dữ liệu sang mã (Nhị phân/Thập phân/Base64)
     async function processBuffer(blob, name) {
         hideLoader();
-        pCont.style.display = 'block';
-        pText.style.display = 'block';
+        pWrapper.style.display = 'block';
+        pFileName.innerText = name;
         
         const reader = new FileReader();
         reader.onload = async function(e) {
             const bytes = new Uint8Array(e.target.result);
             let encoded = "";
-            
-            if (mode.value === 'base64') {
-                encoded = btoa(Array.from(bytes).map(b => String.fromCharCode(b)).join(''));
-                encoded = `data:${blob.type};base64,${encoded}`;
+            const total = bytes.length;
+            const modeVal = document.getElementById('mode').value;
+
+            if (modeVal === 'base64') {
+                pBar.style.width = "100%";
+                pPercent.innerText = "100%";
+                let binary = '';
+                for (let i = 0; i < total; i++) { binary += String.fromCharCode(bytes[i]); }
+                encoded = `data:${blob.type};base64,${btoa(binary)}`;
             } else {
-                for (let i = 0; i < bytes.length; i++) {
-                    if (mode.value === 'binary') encoded += bytes[i].toString(2).padStart(8, '0') + " ";
+                for (let i = 0; i < total; i++) {
+                    if (modeVal === 'binary') encoded += bytes[i].toString(2).padStart(8, '0') + " ";
                     else encoded += bytes[i].toString(10) + " ";
 
-                    if (i % 8000 === 0) {
-                        let pct = Math.round((i / bytes.length) * 100);
+                    if (i % 10000 === 0) {
+                        let pct = Math.round((i / total) * 100);
                         pBar.style.width = pct + "%";
-                        pText.innerText = `Chuyển đổi: ${pct}%`;
+                        pPercent.innerText = pct + "%";
                         await new Promise(r => setTimeout(r, 0));
                     }
                 }
@@ -165,58 +220,25 @@
             
             resultData = encoded.trim();
             pBar.style.width = "100%";
-            pText.innerText = "Hoàn tất 100%!";
-            txtIn.value = `[HOÀN TẤT]\nTên: ${name}\nDung lượng gốc: ${(blob.size/1024).toFixed(2)} KB\nSẵn sàng xuất file .txt`;
-            updateQRView(resultData, true);
-            showStatus("✅ Đã đóng gói thành công!", "status-success");
+            pPercent.innerText = "100%";
+            document.getElementById('txtIn').value = `[HOÀN TẤT]\nTên: ${name}\nDung lượng: ${(total/1024).toFixed(2)} KB`;
+            showStatus("✅ Đóng gói thành công!", "status-success");
         };
         reader.readAsArrayBuffer(blob);
     }
 
-    // XỬ LÝ VĂN BẢN GÕ TAY (Tạo QR)
-    txtIn.oninput = () => {
-        let val = txtIn.value.trim();
-        if (!val || val.startsWith("[HOÀN TẤT]")) return;
-        
-        let encoded = "";
-        for (let i = 0; i < val.length; i++) {
-            let code = val.charCodeAt(i);
-            if (mode.value === 'binary') encoded += code.toString(2).padStart(8, '0') + " ";
-            else if (mode.value === 'decimal') encoded += code.toString(10) + " ";
-        }
-        resultData = encoded || btoa(val);
-        updateQRView(resultData, false);
-    };
-
-    function updateQRView(data, isFile) {
-        if (data.length > 2800 || isFile) {
-            qrImg.src = "https://via.placeholder.com/160?text=CHỈ+HỖ+TRỢ+VĂN+BẢN";
-            qrError.style.display = 'block';
-            qrPath = "";
-        } else {
-            qrError.style.display = 'none';
-            qrPath = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(data)}`;
-            qrImg.src = qrPath;
-        }
-    }
-
-    // UI Helpers
     function showLoader(t) { document.getElementById('loaderText').innerText = t; loader.style.display = 'flex'; }
     function hideLoader() { loader.style.display = 'none'; }
     function showStatus(m, c) { status.innerText = m; status.className = c; status.style.display = 'block'; }
-    function openDownloadModal() { if(!resultData) return alert("Chưa có dữ liệu!"); document.getElementById('modalName').style.display = 'flex'; }
+    function openModal() { if(!resultData) return alert("Chưa có dữ liệu!"); document.getElementById('modalName').style.display = 'flex'; }
     function closeModal() { document.getElementById('modalName').style.display = 'none'; }
     function confirmDownload() {
-        let n = document.getElementById('fileNameInput').value || "squirrel_data";
+        let n = document.getElementById('fileNameInput').value || "data";
         const b = new Blob([resultData], {type: 'text/plain'});
         const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = n + ".txt"; a.click();
         closeModal();
     }
-    async function dlQR() {
-        if(!qrPath) return alert("Không có QR!");
-        const r = await fetch(qrPath); const b = await r.blob();
-        const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = "QR.png"; a.click();
-    }
 </script>
+<style> @keyframes spin { to { transform: rotate(360deg); } } </style>
 </body>
 </html>
