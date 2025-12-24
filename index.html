@@ -3,21 +3,22 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Squirrel's Paw - Pro Encoder v4</title>
+<title>Squirrel's Paw - Ultimate Encoder v5</title>
 <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; display: flex; flex-direction: column; align-items: center; padding: 20px; }
     .app-container { width: 100%; max-width: 420px; background: white; padding: 25px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); display: flex; flex-direction: column; gap: 15px; }
     
-    h2 { text-align: center; color: #333; }
+    h2 { text-align: center; color: #333; margin-bottom: 5px; }
     select, .btn, .url-input, textarea, .modal-input { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #ddd; font-size: 14px; outline: none; }
     
+    .url-group { display: flex; gap: 8px; }
+    .btn-url { background: #e84393; width: 90px; color: white; font-weight: bold; border: none; cursor: pointer; border-radius: 10px; }
     #fBtn { background: #6c5ce7; color: white; font-weight: bold; border: none; cursor: pointer; }
     .btn-main { background: #00b894; color: white; border: none; font-weight: bold; cursor: pointer; padding: 15px; }
     .btn-qr { background: #0984e3; color: white; border: none; width: auto; padding: 10px 20px; margin-top: 10px; cursor: pointer; border-radius: 8px; }
 
-    /* Thanh tiến trình */
-    .progress-container { width: 100%; background: #eee; border-radius: 10px; height: 10px; display: none; overflow: hidden; }
+    .progress-container { width: 100%; background: #eee; border-radius: 10px; height: 10px; display: none; overflow: hidden; margin-top: 5px; }
     #progressBar { width: 0%; height: 100%; background: #6c5ce7; transition: width 0.1s; }
     #progressText { font-size: 11px; text-align: center; color: #6c5ce7; display: none; font-weight: bold; }
 
@@ -26,29 +27,35 @@
     .status-error { color: #d63031; background: #fab1a0; }
 
     #qrSection { border: 2px dashed #ddd; border-radius: 15px; padding: 20px; display: flex; flex-direction: column; align-items: center; background: #fafafa; }
-    #qrImg { width: 180px; height: 180px; background: white; border: 1px solid #eee; object-fit: contain; }
+    #qrImg { width: 160px; height: 160px; background: white; border: 1px solid #eee; object-fit: contain; }
 
     .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: none; justify-content: center; align-items: center; z-index: 1000; flex-direction: column; color: white; }
     .modal-box { background: white; padding: 25px; border-radius: 15px; width: 90%; max-width: 350px; text-align: center; color: #333; }
+    @keyframes spin { to { transform: rotate(360deg); } }
 </style>
 </head>
 <body>
 
 <div id="loader" class="overlay">
     <div style="width: 45px; height: 45px; border: 5px solid #f3f3f3; border-top: 5px solid #6c5ce7; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 15px;"></div>
-    <b id="loaderText">Đang xử lý...</b>
+    <b id="loaderText">Đang tải dữ liệu...</b>
 </div>
 
 <div class="app-container">
-    <h2>Squirrel's Paw</h2>
+    <h2>Squirrel's Paw v5</h2>
 
     <select id="mode">
-        <option value="binary">Mã Nhị phân (Văn bản/File)</option>
-        <option value="decimal">Mã Thập phân (Văn bản/File)</option>
-        <option value="base64">Mã Base64 (Ảnh/Video)</option>
+        <option value="binary">Mã Nhị phân (Binary)</option>
+        <option value="decimal">Mã Thập phân (Decimal)</option>
+        <option value="base64">Mã Base64</option>
     </select>
 
-    <button id="fBtn" class="btn" onclick="document.getElementById('fIn').click()">📁 CHỌN FILE ĐỂ CHUYỂN ĐỔI</button>
+    <div class="url-group">
+        <input type="text" id="urlIn" class="url-input" placeholder="Dán link TikTok hoặc Video/MP3...">
+        <button class="btn-url" onclick="processUrl()">MÃ HÓA</button>
+    </div>
+
+    <button id="fBtn" class="btn" onclick="document.getElementById('fIn').click()">📁 CHỌN FILE TỪ MÁY</button>
     <input type="file" id="fIn" style="display:none">
 
     <div class="progress-container" id="pCont"><div id="progressBar"></div></div>
@@ -56,12 +63,12 @@
 
     <div id="status"></div>
 
-    <textarea id="txtIn" rows="4" placeholder="Nhập văn bản vào đây để tạo QR..."></textarea>
+    <textarea id="txtIn" rows="4" placeholder="Nhập văn bản tạo QR hoặc kết quả file..."></textarea>
 
     <div id="qrSection">
-        <img id="qrImg" src="https://via.placeholder.com/180?text=CHƯA+CÓ+DỮ+LIỆU">
-        <button id="dlQrBtn" class="btn-qr" onclick="dlQR()">TẢI MÃ QR</button>
-        <p id="qrError" style="color:red; font-size:11px; margin-top:10px; display:none;">QR không hỗ trợ nội dung file quá dài!</p>
+        <img id="qrImg" src="https://via.placeholder.com/160?text=QR+CODE">
+        <button class="btn-qr" onclick="dlQR()">TẢI MÃ QR</button>
+        <p id="qrError" style="color:red; font-size:10px; margin-top:8px; display:none; text-align:center;">QR không hỗ trợ nội dung quá dài!<br>Vui lòng dùng nút Xuất File TXT.</p>
     </div>
 
     <button class="btn btn-main" onclick="openDownloadModal()">XUẤT FILE VĂN BẢN (.TXT)</button>
@@ -69,7 +76,7 @@
 
 <div id="modalName" class="overlay">
     <div class="modal-box">
-        <h3>📂 Tải về file .txt</h3>
+        <h3>📂 Đặt tên file lưu trữ</h3>
         <input type="text" id="fileNameInput" class="modal-input" placeholder="Tên file..." style="margin-top:15px;">
         <div style="display:flex; gap:10px; margin-top:20px;">
             <button class="btn" onclick="closeModal()">HỦY</button>
@@ -82,86 +89,108 @@
     const mode = document.getElementById('mode');
     const txtIn = document.getElementById('txtIn');
     const fIn = document.getElementById('fIn');
-    const qrImg = document.getElementById('qrImg');
-    const status = document.getElementById('status');
+    const urlIn = document.getElementById('urlIn');
     const pCont = document.getElementById('pCont');
     const pBar = document.getElementById('progressBar');
     const pText = document.getElementById('progressText');
+    const qrImg = document.getElementById('qrImg');
     const qrError = document.getElementById('qrError');
+    const loader = document.getElementById('loader');
+    const status = document.getElementById('status');
 
     let resultData = "";
     let qrPath = "";
 
-    // 1. XỬ LÝ KHI NHẬP VĂN BẢN TRỰC TIẾP (Tạo QR)
+    // 1. XỬ LÝ TỪ LINK (TikTok/MP3/Video)
+    async function processUrl() {
+        const url = urlIn.value.trim();
+        if(!url) return alert("Vui lòng dán link!");
+
+        showLoader("🔍 Đang trích xuất dữ liệu...");
+        try {
+            let finalUrl = url;
+            // Hỗ trợ TikTok
+            if (url.includes("tiktok.com") || url.includes("douyin.com")) {
+                const api = await fetch(`https://www.tikwm.com/api/?url=${encodeURIComponent(url)}`);
+                const res = await api.json();
+                if (res.data && res.data.play) finalUrl = res.data.play;
+                else throw new Error("Không lấy được link video.");
+            }
+
+            showLoader("📥 Đang tải file về bộ nhớ tạm...");
+            const response = await fetch(finalUrl);
+            if(!response.ok) throw new Error("Server chặn tải trực tiếp.");
+            
+            const blob = await response.blob();
+            processBuffer(blob, "Link_Data");
+        } catch (e) {
+            hideLoader();
+            showStatus("❌ Lỗi: " + e.message, "status-error");
+        }
+    }
+
+    // 2. XỬ LÝ TỪ CHỌN FILE
+    fIn.onchange = (e) => {
+        const file = e.target.files[0];
+        if (file) processBuffer(file, file.name);
+    };
+
+    // HÀM CHUNG: Chuyển dữ liệu sang mã (Nhị phân/Thập phân/Base64)
+    async function processBuffer(blob, name) {
+        hideLoader();
+        pCont.style.display = 'block';
+        pText.style.display = 'block';
+        
+        const reader = new FileReader();
+        reader.onload = async function(e) {
+            const bytes = new Uint8Array(e.target.result);
+            let encoded = "";
+            
+            if (mode.value === 'base64') {
+                encoded = btoa(Array.from(bytes).map(b => String.fromCharCode(b)).join(''));
+                encoded = `data:${blob.type};base64,${encoded}`;
+            } else {
+                for (let i = 0; i < bytes.length; i++) {
+                    if (mode.value === 'binary') encoded += bytes[i].toString(2).padStart(8, '0') + " ";
+                    else encoded += bytes[i].toString(10) + " ";
+
+                    if (i % 8000 === 0) {
+                        let pct = Math.round((i / bytes.length) * 100);
+                        pBar.style.width = pct + "%";
+                        pText.innerText = `Chuyển đổi: ${pct}%`;
+                        await new Promise(r => setTimeout(r, 0));
+                    }
+                }
+            }
+            
+            resultData = encoded.trim();
+            pBar.style.width = "100%";
+            pText.innerText = "Hoàn tất 100%!";
+            txtIn.value = `[HOÀN TẤT]\nTên: ${name}\nDung lượng gốc: ${(blob.size/1024).toFixed(2)} KB\nSẵn sàng xuất file .txt`;
+            updateQRView(resultData, true);
+            showStatus("✅ Đã đóng gói thành công!", "status-success");
+        };
+        reader.readAsArrayBuffer(blob);
+    }
+
+    // XỬ LÝ VĂN BẢN GÕ TAY (Tạo QR)
     txtIn.oninput = () => {
         let val = txtIn.value.trim();
-        if (!val) {
-            resetQR();
-            return;
-        }
+        if (!val || val.startsWith("[HOÀN TẤT]")) return;
         
-        // Chuyển đổi theo chế độ
         let encoded = "";
         for (let i = 0; i < val.length; i++) {
             let code = val.charCodeAt(i);
             if (mode.value === 'binary') encoded += code.toString(2).padStart(8, '0') + " ";
             else if (mode.value === 'decimal') encoded += code.toString(10) + " ";
-            else encoded = btoa(val); // Tạm thời cho Base64 văn bản
         }
-        
-        resultData = (mode.value === 'base64' && !val.includes("data:")) ? btoa(val) : encoded.trim();
-        updateQRView(resultData);
+        resultData = encoded || btoa(val);
+        updateQRView(resultData, false);
     };
 
-    // 2. XỬ LÝ KHI CHỌN FILE (Chuyển đổi nhị phân/thập phân/base64)
-    fIn.onchange = (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-
-        pCont.style.display = 'block';
-        pText.style.display = 'block';
-        showStatus("Đang xử lý file...", "");
-
-        const reader = new FileReader();
-        reader.onload = async function(event) {
-            const bytes = new Uint8Array(event.target.result);
-            let encoded = "";
-            const total = bytes.length;
-
-            if (mode.value === 'base64') {
-                resultData = await toBase64(file);
-                finishProcess(file.name);
-            } else {
-                // Xử lý theo từng khối để cập nhật tiến trình (tránh treo trình duyệt)
-                for (let i = 0; i < total; i++) {
-                    if (mode.value === 'binary') encoded += bytes[i].toString(2).padStart(8, '0') + " ";
-                    else encoded += bytes[i].toString(10) + " ";
-
-                    if (i % 5000 === 0) { // Cập nhật tiến trình mỗi 5000 bytes
-                        let percent = Math.round((i / total) * 100);
-                        pBar.style.width = percent + "%";
-                        pText.innerText = `Đang chuyển đổi: ${percent}%`;
-                        await new Promise(r => setTimeout(r, 0)); // Nghỉ để UI cập nhật
-                    }
-                }
-                resultData = encoded.trim();
-                finishProcess(file.name);
-            }
-        };
-        reader.readAsArrayBuffer(file);
-    };
-
-    function finishProcess(fileName) {
-        pBar.style.width = "100%";
-        pText.innerText = "Hoàn tất 100%!";
-        txtIn.value = `[ĐÃ MÃ HÓA FILE]\nTên: ${fileName}\nĐộ dài mã: ${resultData.length} ký tự.\nNhấn nút Xuất File để tải mã về.`;
-        updateQRView(resultData, true); // True là từ file
-        showStatus("✅ Đã chuyển đổi thành công!", "status-success");
-    }
-
-    function updateQRView(data, isFromFile = false) {
-        if (data.length > 2800 || isFromFile) {
-            qrImg.src = "https://via.placeholder.com/180?text=KHÔNG+HỖ+TRỢ+FILE";
+    function updateQRView(data, isFile) {
+        if (data.length > 2800 || isFile) {
+            qrImg.src = "https://via.placeholder.com/160?text=CHỈ+HỖ+TRỢ+VĂN+BẢN";
             qrError.style.display = 'block';
             qrPath = "";
         } else {
@@ -171,43 +200,23 @@
         }
     }
 
-    function resetQR() {
-        qrImg.src = "https://via.placeholder.com/180?text=CHƯA+CÓ+DỮ+LIỆU";
-        qrPath = "";
-        qrError.style.display = 'none';
-    }
-
-    // Chuyển Base64 nhanh
-    function toBase64(file) {
-        return new Promise((resolve, reject) => {
-            const r = new FileReader();
-            r.readAsDataURL(file);
-            r.onload = () => resolve(r.result);
-            r.onerror = e => reject(e);
-        });
-    }
-
-    // UI & Download
-    function showStatus(msg, cls) { status.innerText = msg; status.className = 'status ' + cls; status.style.display = 'block'; }
-    function openDownloadModal() { if(!resultData) return alert("Không có dữ liệu!"); document.getElementById('modalName').style.display = 'flex'; }
+    // UI Helpers
+    function showLoader(t) { document.getElementById('loaderText').innerText = t; loader.style.display = 'flex'; }
+    function hideLoader() { loader.style.display = 'none'; }
+    function showStatus(m, c) { status.innerText = m; status.className = c; status.style.display = 'block'; }
+    function openDownloadModal() { if(!resultData) return alert("Chưa có dữ liệu!"); document.getElementById('modalName').style.display = 'flex'; }
     function closeModal() { document.getElementById('modalName').style.display = 'none'; }
     function confirmDownload() {
-        let name = document.getElementById('fileNameInput').value || "data";
-        const blob = new Blob([resultData], {type: 'text/plain'});
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = name + ".txt";
-        a.click();
+        let n = document.getElementById('fileNameInput').value || "squirrel_data";
+        const b = new Blob([resultData], {type: 'text/plain'});
+        const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = n + ".txt"; a.click();
         closeModal();
     }
     async function dlQR() {
-        if(!qrPath) return alert("Không có mã QR để tải!");
-        const r = await fetch(qrPath);
-        const b = await r.blob();
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(b); a.download = "QR_Code.png"; a.click();
+        if(!qrPath) return alert("Không có QR!");
+        const r = await fetch(qrPath); const b = await r.blob();
+        const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = "QR.png"; a.click();
     }
 </script>
-<style> @keyframes spin { to { transform: rotate(360deg); } } </style>
 </body>
 </html>
