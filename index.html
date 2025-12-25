@@ -1,244 +1,205 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Squirrel's Paw - Pro Converter v7</title>
-<style>
-    :root {
-        --primary-color: #6c5ce7;
-        --secondary-color: #00b894;
-        --accent-color: #e84393;
-        --download-color: #ff7675;
-        --bg-color: #f0f2f5;
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ketnoi090 - P2P Chat</title>
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <style>
+        :root { --bg: #0f0f0f; --primary: #00d2ff; --me: #0084ff; --host: #ffcc00; --card: #1e1e1e; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: white; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { 
-        font-family: 'Segoe UI', sans-serif; 
-        background: var(--bg-color); 
-        display: flex; justify-content: center; align-items: center; 
-        min-height: 100vh; padding: 20px; 
-    }
+        /* Màn hình chờ - Cực kỳ nhỏ gọn */
+        #overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 20px; }
+        .login-card { background: var(--card); padding: 30px 25px; border-radius: 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.5); display: flex; flex-direction: column; align-items: center; gap: 15px; width: 100%; max-width: 320px; border: 1px solid #333; }
+        .login-card h2 { margin: 0; color: var(--primary); font-size: 20px; letter-spacing: 1px; }
+        #online-counter { font-size: 13px; color: #00ff88; background: rgba(0,255,136,0.1); padding: 4px 12px; border-radius: 20px; }
+        .login-card input { padding: 12px; border-radius: 10px; border: 1px solid #444; background: #111; color: white; width: 100%; box-sizing: border-box; text-align: center; font-size: 15px; outline: none; }
+        .btn-join { width: 100%; padding: 12px; border-radius: 10px; border: none; background: var(--primary); color: black; font-weight: bold; cursor: pointer; font-size: 15px; }
 
-    .app-container { 
-        width: 100%; max-width: 450px; background: white; 
-        padding: 30px; border-radius: 24px; 
-        box-shadow: 0 20px 40px rgba(0,0,0,0.08); 
-        display: flex; flex-direction: column; gap: 15px; 
-    }
+        /* Video Layout - Cách lề để không sát viền */
+        .grid-section { padding: 10px; display: grid; gap: 10px; }
+        #top-videos { flex: 1; grid-template-columns: repeat(3, 1fr); }
+        #bottom-videos { flex: 1; grid-template-columns: 1fr 1fr; border-top: 1px solid #222; }
+        
+        .v-container { position: relative; background: #000; border-radius: 12px; overflow: hidden; border: 1px solid #333; height: 100%; min-height: 120px; }
+        video { width: 100%; height: 100%; object-fit: cover; }
+        .tag { position: absolute; bottom: 5px; left: 5px; background: rgba(0,0,0,0.7); padding: 3px 8px; border-radius: 5px; font-size: 11px; }
+        .host-tag { background: var(--host) !important; color: black; font-weight: bold; }
 
-    h2 { text-align: center; color: #2d3436; font-size: 24px; }
-    select, .btn, .url-input, textarea, .modal-input { 
-        width: 100%; padding: 14px; border-radius: 12px; 
-        border: 1.5px solid #eee; font-size: 15px; outline: none; 
-    }
+        /* Chat Box */
+        #chat-box { flex: 2; overflow-y: auto; padding: 15px; background: #0f0f0f; display: flex; flex-direction: column; gap: 8px; margin: 0 10px; }
+        .msg-row { display: flex; width: 100%; }
+        .row-me { justify-content: flex-end; }
+        .row-remote { justify-content: flex-start; }
+        .msg { padding: 8px 12px; border-radius: 15px; max-width: 75%; font-size: 14px; }
+        .msg-me { background: var(--me); border-bottom-right-radius: 2px; }
+        .msg-remote { background: #333; border-bottom-left-radius: 2px; }
+        .msg img { max-width: 100%; border-radius: 8px; margin-top: 5px; display: block; }
+        .u-name { font-size: 10px; color: #888; margin-bottom: 2px; display: block; }
 
-    .url-group { display: flex; gap: 10px; }
-    .btn-url { background: var(--accent-color); color: white; border: none; font-weight: bold; cursor: pointer; width: 100px; }
-    #fBtn { background: var(--primary-color); color: white; border: none; font-weight: 600; cursor: pointer; }
-    .btn-main { background: var(--secondary-color); color: white; border: none; font-weight: bold; cursor: pointer; padding: 16px; font-size: 16px; }
-    
-    /* Nút tải video TikTok mới */
-    #btnDownloadOrigin { 
-        background: var(--download-color); color: white; border: none; 
-        font-weight: bold; cursor: pointer; padding: 16px; font-size: 16px;
-        display: none; /* Ẩn mặc định */
-        transition: all 0.3s;
-    }
-
-    /* Progress Bar */
-    .progress-wrapper { display: none; margin: 10px 0; }
-    .progress-label { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 13px; font-weight: 600; color: var(--primary-color); }
-    .progress-container { width: 100%; background: #e9ecef; border-radius: 20px; height: 18px; overflow: hidden; }
-    #progressBar { 
-        width: 0%; height: 100%; 
-        background: linear-gradient(45deg, var(--primary-color) 25%, #a29bfe 25%, #a29bfe 50%, var(--primary-color) 50%, var(--primary-color) 75%, #a29bfe 75%, #a29bfe);
-        background-size: 40px 40px; animation: progress-bar-stripes 1s linear infinite; border-radius: 20px;
-    }
-    @keyframes progress-bar-stripes { from { background-position: 40px 0; } to { background-position: 0 0; } }
-
-    #status { font-size: 13px; text-align: center; font-weight: 500; display: none; padding: 12px; border-radius: 10px; }
-    .status-success { color: #009432; background: #e8f5e9; }
-    .status-error { color: #c0392b; background: #fdf2f2; }
-    textarea { background: #fafafa; color: #636e72; resize: none; font-family: monospace; font-size: 11px; }
-
-    .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: none; justify-content: center; align-items: center; z-index: 1000; flex-direction: column; color: white; backdrop-filter: blur(4px); }
-    .modal-box { background: white; padding: 30px; border-radius: 20px; width: 90%; max-width: 380px; text-align: center; color: #2d3436; }
-</style>
+        /* Input area */
+        #input-bar { padding: 12px; display: flex; gap: 10px; background: #151515; align-items: center; border-top: 1px solid #222; margin-bottom: 5px; }
+        #msg-input { flex: 1; padding: 10px 15px; border-radius: 20px; border: none; background: #252525; color: white; outline: none; }
+    </style>
 </head>
 <body>
 
-<div id="loader" class="overlay">
-    <div style="width: 40px; height: 40px; border: 4px solid rgba(255,255,255,0.3); border-top: 4px solid white; border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 15px;"></div>
-    <b id="loaderText">Đang xử lý...</b>
+<div id="overlay">
+    <div class="login-card">
+        <h2>KETNOI090</h2>
+        <div id="online-counter">Đang kiểm tra...</div>
+        <input type="text" id="user-name" placeholder="Tên của bạn">
+        <button class="btn-join" onclick="startApp()">THAM GIA</button>
+    </div>
 </div>
 
-<div class="app-container">
-    <h2>Squirrel's Paw v7</h2>
-
-    <select id="mode">
-        <option value="binary">Chuyển sang Nhị phân (Binary)</option>
-        <option value="decimal">Chuyển sang Thập phân (Decimal)</option>
-        <option value="base64">Chuyển sang Base64</option>
-    </select>
-
-    <div class="url-group">
-        <input type="text" id="urlIn" class="url-input" placeholder="Dán link TikTok tại đây...">
-        <button class="btn btn-url" onclick="processUrl()">MÃ HÓA</button>
-    </div>
-
-    <button id="fBtn" class="btn" onclick="document.getElementById('fIn').click()">📁 CHỌN FILE TỪ THIẾT BỊ</button>
-    <input type="file" id="fIn" style="display:none">
-
-    <div class="progress-wrapper" id="pWrapper">
-        <div class="progress-label"><span id="pFileName">File...</span><span id="pPercentage">0%</span></div>
-        <div class="progress-container"><div id="progressBar"></div></div>
-    </div>
-
-    <div id="status"></div>
-    <textarea id="txtIn" rows="4" readonly placeholder="Thông tin mã hóa..."></textarea>
-
-    <button class="btn btn-main" onclick="openModal()">XUẤT FILE VĂN BẢN (.TXT)</button>
-    
-    <button id="btnDownloadOrigin" class="btn" onclick="downloadOriginFile()">📥 TẢI VIDEO/ẢNH GỐC (TIKTOK)</button>
+<div id="top-videos" class="grid-section"></div>
+<div id="chat-box"></div>
+<div id="input-bar">
+    <input type="file" id="file-input" hidden accept="image/*" onchange="sendFile(this)">
+    <button onclick="document.getElementById('file-input').click()" style="background:none; border:none; cursor:pointer; font-size: 20px;">📷</button>
+    <input type="text" id="msg-input" placeholder="Tin nhắn..." onkeypress="if(event.key==='Enter') sendText()">
+    <button onclick="sendText()" style="background:var(--primary); border:none; border-radius:50%; width:36px; height:36px; cursor:pointer; color:black;">🚀</button>
 </div>
-
-<div id="modalName" class="overlay">
-    <div class="modal-box">
-        <h3>📂 Đặt tên file .txt</h3>
-        <input type="text" id="fileNameInput" class="modal-input" placeholder="Tên file..." style="margin-top:15px;">
-        <div style="display:flex; gap:10px; margin-top:25px;">
-            <button class="btn" style="background:#dfe6e9;" onclick="closeModal()">HỦY</button>
-            <button class="btn" style="background:var(--primary-color); color:white;" onclick="confirmDownload()">TẢI XUỐNG</button>
-        </div>
+<div id="bottom-videos" class="grid-section">
+    <div class="v-container">
+        <video id="local-video" autoplay muted playsinline style="transform: scaleX(-1);"></video>
+        <div class="tag" id="my-tag">Tôi</div>
     </div>
 </div>
 
 <script>
-    const urlIn = document.getElementById('urlIn');
-    const pWrapper = document.getElementById('pWrapper');
-    const pBar = document.getElementById('progressBar');
-    const pPercent = document.getElementById('pPercentage');
-    const pFileName = document.getElementById('pFileName');
-    const status = document.getElementById('status');
-    const loader = document.getElementById('loader');
-    const btnDownloadOrigin = document.getElementById('btnDownloadOrigin');
+    let peer, localStream, myName, isHost = false;
+    let connections = {};
+    const ROOM_ID = "Ketnoi090_P2P_Final";
 
-    let resultData = "";
-    let originFileUrl = ""; // Lưu link tải trực tiếp
+    // Mô phỏng số người online tại màn hình chờ
+    function updatePreviewCount() {
+        const count = Object.keys(connections).length + 1;
+        document.getElementById('online-counter').innerText = `● ${count}/5 Online`;
+    }
+    setInterval(updatePreviewCount, 2000);
 
-    async function processUrl() {
-        const url = urlIn.value.trim();
-        if(!url) return alert("Hãy dán link!");
-        
-        btnDownloadOrigin.style.display = 'none'; // Ẩn nút tải gốc khi bắt đầu mới
-        showLoader("🔍 Đang trích xuất dữ liệu TikTok...");
+    async function startApp() {
+        myName = document.getElementById('user-name').value.trim();
+        if(!myName) return alert("Vui lòng nhập tên!");
 
         try {
-            let finalUrl = url;
-            if (url.includes("tiktok.com") || url.includes("douyin.com")) {
-                const api = await fetch(`https://www.tikwm.com/api/?url=${encodeURIComponent(url)}`);
-                const res = await api.json();
-                if (res.data && res.data.play) {
-                    finalUrl = res.data.play;
-                    originFileUrl = finalUrl; // Lưu lại để tải
-                    btnDownloadOrigin.style.display = 'block'; // Hiện nút tải gốc
-                } else {
-                    throw new Error("Không tìm thấy video. Link có thể bị lỗi hoặc riêng tư.");
-                }
-            }
-
-            showLoader("📥 Đang tải dữ liệu về...");
-            const response = await fetch(finalUrl);
-            const blob = await response.blob();
-            processBuffer(blob, "TikTok_Video");
+            localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+            document.getElementById('local-video').srcObject = localStream;
         } catch (e) {
-            hideLoader();
-            showStatus("❌ Lỗi: " + e.message, "status-error");
+            alert("Không thể mở Camera. Hãy dùng HTTPS!");
+            return;
         }
+
+        document.getElementById('overlay').style.display = 'none';
+        peer = new Peer(ROOM_ID);
+
+        peer.on('open', () => {
+            isHost = true;
+            document.getElementById('my-tag').innerText = myName + " (Chủ phòng)";
+            document.getElementById('my-tag').classList.add('host-tag');
+        });
+
+        peer.on('error', (err) => {
+            if (err.type === 'id-taken') {
+                peer = new Peer();
+                peer.on('open', () => {
+                    setupData(peer.connect(ROOM_ID));
+                    setupVideo(peer.call(ROOM_ID, localStream));
+                });
+            }
+        });
+
+        peer.on('connection', setupData);
+        peer.on('call', (call) => {
+            call.answer(localStream);
+            setupVideo(call);
+        });
     }
 
-    // Hàm tải video gốc về máy
-    async function downloadOriginFile() {
-        if (!originFileUrl) return;
-        showLoader("🚀 Đang chuẩn bị tải video...");
-        try {
-            const response = await fetch(originFileUrl);
-            const blob = await response.blob();
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = "tiktok_origin_" + Date.now() + ".mp4";
-            link.click();
-            hideLoader();
-        } catch (e) {
-            hideLoader();
-            alert("Lỗi khi tải file gốc. Bạn có thể mở link trực tiếp: " + originFileUrl);
-        }
+    function setupData(conn) {
+        conn.on('open', () => {
+            connections[conn.peer] = conn;
+            conn.send({ type: 'intro', name: myName, isHost: isHost });
+            conn.on('data', (data) => {
+                if(data.type === 'intro') {
+                    connections[conn.peer].remoteName = data.name;
+                    connections[conn.peer].remoteIsHost = data.isHost;
+                }
+                if(data.type === 'text') addMsg(data.content, 'remote', connections[conn.peer].remoteName);
+                if(data.type === 'file') addFile(data, 'remote', connections[conn.peer].remoteName);
+            });
+        });
+        conn.on('close', () => {
+            document.getElementById('box-' + conn.peer)?.remove();
+            delete connections[conn.peer];
+        });
     }
 
-    // Chọn file từ máy
-    document.getElementById('fIn').onchange = (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            btnDownloadOrigin.style.display = 'none';
-            processBuffer(file, file.name);
-        }
-    };
-
-    async function processBuffer(blob, name) {
-        hideLoader();
-        pWrapper.style.display = 'block';
-        pFileName.innerText = name;
-        
-        const reader = new FileReader();
-        reader.onload = async function(e) {
-            const bytes = new Uint8Array(e.target.result);
-            let encoded = "";
-            const total = bytes.length;
-            const modeVal = document.getElementById('mode').value;
-
-            if (modeVal === 'base64') {
-                pBar.style.width = "100%";
-                pPercent.innerText = "100%";
-                let binary = '';
-                for (let i = 0; i < total; i++) { binary += String.fromCharCode(bytes[i]); }
-                encoded = `data:${blob.type};base64,${btoa(binary)}`;
-            } else {
-                for (let i = 0; i < total; i++) {
-                    if (modeVal === 'binary') encoded += bytes[i].toString(2).padStart(8, '0') + " ";
-                    else encoded += bytes[i].toString(10) + " ";
-
-                    if (i % 10000 === 0) {
-                        let pct = Math.round((i / total) * 100);
-                        pBar.style.width = pct + "%";
-                        pPercent.innerText = pct + "%";
-                        await new Promise(r => setTimeout(r, 0));
-                    }
-                }
-            }
+    function setupVideo(call) {
+        call.on('stream', (stream) => {
+            if (document.getElementById('video-' + call.peer)) return;
+            const container = document.createElement('div');
+            container.className = 'v-container';
+            container.id = 'box-' + call.peer;
+            const video = document.createElement('video');
+            video.id = 'video-' + call.peer;
+            video.srcObject = stream;
+            video.autoplay = true;
+            video.playsInline = true;
+            const tag = document.createElement('div');
+            tag.className = 'tag';
             
-            resultData = encoded.trim();
-            pBar.style.width = "100%";
-            pPercent.innerText = "100%";
-            document.getElementById('txtIn').value = `[HOÀN TẤT]\nTên: ${name}\nDung lượng: ${(total/1024).toFixed(2)} KB`;
-            showStatus("✅ Đóng gói thành công!", "status-success");
-        };
-        reader.readAsArrayBuffer(blob);
+            setTimeout(() => {
+                const info = connections[call.peer];
+                tag.innerText = (info?.remoteName || "Bạn bè") + (info?.remoteIsHost ? " (Chủ phòng)" : "");
+                if(info?.remoteIsHost) tag.classList.add('host-tag');
+            }, 1500);
+
+            container.appendChild(video);
+            container.appendChild(tag);
+            const top = document.getElementById('top-videos');
+            const bottom = document.getElementById('bottom-videos');
+            if (top.children.length < 3) top.appendChild(container);
+            else bottom.appendChild(container);
+        });
     }
 
-    function showLoader(t) { document.getElementById('loaderText').innerText = t; loader.style.display = 'flex'; }
-    function hideLoader() { loader.style.display = 'none'; }
-    function showStatus(m, c) { status.innerText = m; status.className = c; status.style.display = 'block'; }
-    function openModal() { if(!resultData) return alert("Chưa có dữ liệu!"); document.getElementById('modalName').style.display = 'flex'; }
-    function closeModal() { document.getElementById('modalName').style.display = 'none'; }
-    function confirmDownload() {
-        let n = document.getElementById('fileNameInput').value || "data";
-        const b = new Blob([resultData], {type: 'text/plain'});
-        const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = n + ".txt"; a.click();
-        closeModal();
+    function sendText() {
+        const input = document.getElementById('msg-input');
+        if (input.value.trim()) {
+            Object.values(connections).forEach(c => c.send({ type: 'text', content: input.value }));
+            addMsg(input.value, 'me', myName);
+            input.value = '';
+        }
+    }
+
+    function sendFile(input) {
+        const file = input.files[0];
+        if (file) {
+            Object.values(connections).forEach(c => c.send({ type: 'file', content: file, fileType: file.type }));
+            addFile({ content: file, fileType: file.type }, 'me', myName);
+        }
+    }
+
+    function addMsg(content, sender, name) {
+        const row = document.createElement('div');
+        row.className = `msg-row row-${sender}`;
+        row.innerHTML = `<div class="msg msg-${sender}"><span class="u-name">${name}</span>${content}</div>`;
+        document.getElementById('chat-box').appendChild(row);
+        document.getElementById('chat-box').scrollTop = document.getElementById('chat-box').scrollHeight;
+    }
+
+    function addFile(data, sender, name) {
+        const row = document.createElement('div');
+        row.className = `msg-row row-${sender}`;
+        const url = URL.createObjectURL(new Blob([data.content]));
+        row.innerHTML = `<div class="msg msg-${sender}"><span class="u-name">${name}</span><img src="${url}" onclick="window.open(this.src)"></div>`;
+        document.getElementById('chat-box').appendChild(row);
+        document.getElementById('chat-box').scrollTop = document.getElementById('chat-box').scrollHeight;
     }
 </script>
-<style> @keyframes spin { to { transform: rotate(360deg); } } </style>
 </body>
 </html>
