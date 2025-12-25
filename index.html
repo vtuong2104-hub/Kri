@@ -3,109 +3,124 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Ketnoi090 - Smart Connect</title>
+    <title>Ketnoi090 - Camera & Chat</title>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
-        :root { --bg: #000; --primary: #00d2ff; --card: #1a1a1a; --accent: #ffcc00; }
-        body { font-family: sans-serif; background: var(--bg); color: white; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        :root { --bg: #000; --primary: #00d2ff; --me: #0084ff; }
+        body { font-family: sans-serif; background: var(--bg); color: white; margin: 0; display: flex; flex-direction: column; height: 100vh; width: 100vw; overflow: hidden; }
+        
+        /* Header */
+        header { display: flex; justify-content: space-between; align-items: center; padding: 10px 15px; background: #111; border-bottom: 1px solid #333; height: 50px; flex-shrink: 0; }
 
-        /* Popup thông báo mã cho người đầu tiên */
-        #code-popup { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 3000; display: none; align-items: center; justify-content: center; padding: 20px; }
-        .popup-card { background: var(--card); padding: 30px; border-radius: 20px; text-align: center; border: 2px solid var(--primary); width: 100%; max-width: 320px; }
-        .id-value { background: #000; padding: 15px; border-radius: 10px; font-family: monospace; font-size: 18px; color: var(--primary); margin: 15px 0; border: 1px dashed #555; word-break: break-all; }
+        /* Video Area - Luôn hiển thị ở trên cùng */
+        #video-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px; background: #080808; flex-shrink: 0; }
+        .v-box { position: relative; background: #222; border-radius: 10px; overflow: hidden; height: 140px; border: 1px solid #333; }
+        video { width: 100%; height: 100%; object-fit: cover; }
+        .tag { position: absolute; bottom: 5px; left: 5px; font-size: 10px; background: rgba(0,0,0,0.6); padding: 2px 6px; border-radius: 4px; }
+
+        /* KHUNG CHAT - Chiếm không gian chính ở giữa */
+        #chat-box { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 10px; background: #0a0a0a; border-top: 1px solid #222; }
+        .msg-row { display: flex; width: 100%; }
+        .row-me { justify-content: flex-end; }
+        .row-remote { justify-content: flex-start; }
+        .msg { padding: 10px 14px; border-radius: 18px; max-width: 75%; font-size: 14px; line-height: 1.4; word-break: break-word; }
+        .msg-me { background: var(--me); border-bottom-right-radius: 2px; }
+        .msg-remote { background: #333; border-bottom-left-radius: 2px; }
+        .u-name { font-size: 10px; opacity: 0.5; margin-bottom: 2px; display: block; }
+
+        /* Input Bar - Luôn ở dưới cùng */
+        #input-bar { padding: 10px; display: flex; gap: 8px; background: #1a1a1a; border-top: 1px solid #333; align-items: center; padding-bottom: calc(10px + env(safe-area-inset-bottom)); flex-shrink: 0; }
+        #msg-in { flex: 1; padding: 10px 15px; border-radius: 20px; border: none; background: #333; color: white; outline: none; font-size: 16px; }
 
         /* Màn hình chờ nhập tên */
-        #overlay { position: fixed; inset: 0; background: var(--bg); z-index: 2000; display: flex; align-items: center; justify-content: center; padding: 20px; }
-        .login-card { background: var(--card); padding: 25px; border-radius: 20px; width: 100%; max-width: 300px; text-align: center; border: 1px solid #333; }
-        .login-card input { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 1px solid #444; background: #000; color: white; box-sizing: border-box; text-align: center; }
-
-        /* Màn hình cho người vào sau (Nhập mã kết nối) */
-        #join-screen { position: fixed; inset: 0; background: var(--bg); z-index: 1500; display: none; align-items: center; justify-content: center; padding: 20px; }
-        .join-card { background: var(--card); padding: 25px; border-radius: 20px; width: 100%; max-width: 300px; text-align: center; border: 1px solid var(--accent); }
-
-        /* Layout Video & Chat */
-        #video-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px; background: #080808; max-height: 25vh; }
-        .v-box { position: relative; background: #222; border-radius: 8px; overflow: hidden; height: 110px; border: 1px solid #333; }
-        video { width: 100%; height: 100%; object-fit: cover; }
-        
-        #chat-box { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 10px; background: #121212; border-top: 1px solid #333; }
-        .msg { padding: 10px 14px; border-radius: 18px; max-width: 80%; font-size: 14px; }
-        .msg-me { background: #0084ff; align-self: flex-end; border-bottom-right-radius: 4px; }
-        .msg-remote { background: #333; align-self: flex-start; border-bottom-left-radius: 4px; }
-
-        #input-bar { padding: 10px; display: flex; gap: 8px; background: #1a1a1a; padding-bottom: calc(10px + env(safe-area-inset-bottom)); }
-        #msg-in { flex: 1; padding: 10px 15px; border-radius: 20px; border: none; background: #333; color: white; outline: none; }
-        
-        button { padding: 12px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; transition: 0.3s; }
-        .btn-primary { background: var(--primary); color: black; }
-        .btn-accent { background: var(--accent); color: black; }
+        #overlay { position: fixed; inset: 0; background: var(--bg); z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 20px; }
+        .card { background: #1a1a1a; padding: 25px; border-radius: 20px; text-align: center; border: 1px solid #333; width: 100%; max-width: 300px; }
+        .card input { width: 100%; padding: 12px; margin: 15px 0; border-radius: 8px; border: 1px solid #444; background: #000; color: white; text-align: center; }
     </style>
 </head>
 <body>
 
-<div id="code-popup">
-    <div class="popup-card">
-        <h3 style="margin:0">MÃ BẠN BÈ</h3>
-        <p style="font-size:12px; color:#aaa">Gửi mã này cho bạn bè để kết nối</p>
-        <div class="id-value" id="my-id-text">Đang lấy mã...</div>
-        <button class="btn-primary" style="width:100%" onclick="copyId()">COPY MÃ & BẮT ĐẦU</button>
-    </div>
-</div>
-
 <div id="overlay">
-    <div class="login-card">
-        <h2 style="color:var(--primary); margin:0 0 15px 0;">KETNOI090</h2>
-        <input type="text" id="user-name" placeholder="Tên của bạn...">
-        <button class="btn-primary" style="width:100%" onclick="checkRole()">TIẾP TỤC</button>
+    <div class="card">
+        <h2 style="color:var(--primary); margin:0;">KETNOI090</h2>
+        <p style="font-size:12px; color:#888;">Nhìn thấy nhau & Chat trực tiếp</p>
+        <input type="text" id="user-name" placeholder="Nhập tên của bạn...">
+        <button onclick="startApp()" style="width:100%; padding:12px; border-radius:8px; border:none; background:var(--primary); font-weight:bold; cursor:pointer;">BẮT ĐẦU</button>
     </div>
 </div>
 
-<div id="join-screen">
-    <div class="join-card">
-        <h3 style="margin:0">KẾT NỐI BẠN BÈ</h3>
-        <p style="font-size:12px; color:#aaa">Dán mã bạn bè đã gửi vào đây</p>
-        <input type="text" id="partner-id-in" placeholder="Nhập mã tại đây..." 
-               style="width:100%; padding:12px; margin:15px 0; border-radius:8px; border:1px solid #444; background:#000; color:white; text-align:center;">
-        <button class="btn-accent" style="width:100%" onclick="connectToFriend()">KẾT NỐI NGAY</button>
-        <p style="font-size:10px; margin-top:10px; color:#555" onclick="showPopupManual()">Tôi là người tạo phòng</p>
-    </div>
-</div>
+<header>
+    <span style="color:var(--primary); font-weight:bold;">KETNOI090 Cloud</span>
+    <button onclick="resetRoom()" style="background:none; border:none; color:#ff4444; font-size:14px; cursor:pointer;">🔄 Reset Phòng</button>
+</header>
 
 <div id="video-grid">
     <div class="v-box">
         <video id="local-video" autoplay muted playsinline style="transform: scaleX(-1);"></video>
-        <div style="position:absolute; bottom:5px; left:5px; font-size:10px; background:rgba(0,0,0,0.5); padding:2px 5px;">Tôi</div>
+        <div class="tag">Tôi</div>
     </div>
+    </div>
+
+<div id="chat-box">
+    <div style="text-align:center; font-size:11px; color:#555; margin:10px 0;">Hệ thống: Đang chờ kết nối...</div>
 </div>
 
-<div id="chat-box"></div>
-
 <div id="input-bar">
+    <input type="file" id="file-in" hidden accept="image/*" onchange="sendFile(this)">
+    <button style="background:none; border:none; font-size:20px;" onclick="document.getElementById('file-in').click()">📷</button>
     <input type="text" id="msg-in" placeholder="Nhắn tin..." onkeypress="if(event.key==='Enter') sendText()">
-    <button onclick="sendText()" style="background:var(--primary); border-radius:50%; width:40px; height:40px;">🚀</button>
+    <button onclick="sendText()" style="background:var(--primary); border:none; border-radius:50%; width:40px; height:40px; color:black; font-weight:bold;">🚀</button>
 </div>
 
 <script>
+    // SỬ DỤNG BIN ID VÀ KEY CỦA BẠN
+    const BIN_ID = "694d410443b1c97be9047914"; 
+    const API_KEY = "$2a$10$2BLENCGAiBNnNJFMRICHTedOtWa19TvenTNDCWmE7oQD6iugGK0be";
+
     let peer, localStream, myName;
     let connections = {};
 
-    async function checkRole() {
+    async function startApp() {
         myName = document.getElementById('user-name').value.trim();
-        if(!myName) return alert("Nhập tên!");
+        if(!myName) return alert("Vui lòng nhập tên!");
+        
+        // Mở camera ngay lập tức
+        try {
+            localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+            document.getElementById('local-video').srcObject = localStream;
+        } catch (e) {
+            alert("Lỗi: Không mở được Camera. Hãy kiểm tra quyền truy cập.");
+            return;
+        }
 
-        localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true }).catch(() => {
-            alert("Lỗi! Cần Camera để hoạt động."); return null;
-        });
-        if(!localStream) return;
-        document.getElementById('local-video').srcObject = localStream;
         document.getElementById('overlay').style.display = 'none';
 
-        // Khởi tạo Peer
         peer = new Peer();
-        peer.on('open', (id) => {
-            document.getElementById('my-id-text').innerText = id;
-            // Hiển thị màn hình nhập mã cho người vào sau
-            document.getElementById('join-screen').style.display = 'flex';
+        peer.on('open', async (myId) => {
+            try {
+                // Kiểm tra ID trên Cloud
+                const res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
+                    headers: { "X-Master-Key": API_KEY }
+                });
+                const data = await res.json();
+                const currentHost = data.record.hostId;
+
+                if (!currentHost || currentHost === "") {
+                    // Mình vào trước -> Ghi tên lên Cloud
+                    await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
+                        method: 'PUT',
+                        headers: { "Content-Type": "application/json", "X-Master-Key": API_KEY },
+                        body: JSON.stringify({ hostId: myId })
+                    });
+                    addMsg("Bạn đã vào phòng. Hãy bảo bạn bè truy cập để nhìn thấy nhau.", "remote", "Hệ thống");
+                } else if (currentHost !== myId) {
+                    // Có người rồi -> Tự động kết nối camera và chat
+                    const conn = peer.connect(currentHost);
+                    setupData(conn);
+                    const call = peer.call(currentHost, localStream);
+                    setupVideo(call);
+                }
+            } catch (e) { addMsg("Lỗi Cloud! Hãy nhấn Reset.", "remote", "Lỗi"); }
         });
 
         peer.on('call', (call) => {
@@ -115,33 +130,13 @@
         peer.on('connection', setupData);
     }
 
-    function showPopupManual() {
-        document.getElementById('join-screen').style.display = 'none';
-        document.getElementById('code-popup').style.display = 'flex';
-    }
-
-    function copyId() {
-        const id = document.getElementById('my-id-text').innerText;
-        navigator.clipboard.writeText(id);
-        alert("Đã copy mã! Hãy gửi cho bạn bè.");
-        document.getElementById('code-popup').style.display = 'none';
-    }
-
-    function connectToFriend() {
-        const pId = document.getElementById('partner-id-in').value.trim();
-        if(!pId) return alert("Vui lòng dán mã bạn bè!");
-        
-        setupData(peer.connect(pId));
-        setupVideo(peer.call(pId, localStream));
-        document.getElementById('join-screen').style.display = 'none';
-    }
-
     function setupData(conn) {
         conn.on('open', () => {
             connections[conn.peer] = conn;
-            addMsg("Kết nối thành công!", "remote", "Hệ thống");
+            addMsg("Đã kết nối thành công!", "remote", "Hệ thống");
             conn.on('data', (data) => {
                 if(data.type === 'text') addMsg(data.content, 'remote', data.name);
+                if(data.type === 'image') addImg(data.content, 'remote', data.name);
             });
         });
     }
@@ -153,11 +148,20 @@
             box.className = 'v-box'; box.id = 'v-' + call.peer;
             const v = document.createElement('video');
             v.srcObject = stream; v.autoplay = true; v.playsInline = true;
-            box.appendChild(v);
+            const t = document.createElement('div'); t.className = 'tag'; t.innerText = "Bạn bè";
+            box.appendChild(v); box.appendChild(t);
             document.getElementById('video-grid').appendChild(box);
-            document.getElementById('join-screen').style.display = 'none';
-            document.getElementById('code-popup').style.display = 'none';
         });
+    }
+
+    async function resetRoom() {
+        if(!confirm("Làm mới phòng?")) return;
+        await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
+            method: 'PUT',
+            headers: { "Content-Type": "application/json", "X-Master-Key": API_KEY },
+            body: JSON.stringify({ hostId: "" })
+        });
+        location.reload();
     }
 
     function sendText() {
@@ -169,11 +173,32 @@
         }
     }
 
+    function sendFile(input) {
+        const file = input.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = () => {
+                Object.values(connections).forEach(c => c.send({ type: 'image', content: reader.result, name: myName }));
+                addImg(reader.result, 'me', myName);
+            };
+            reader.readAsDataURL(file);
+        }
+    }
+
     function addMsg(txt, side, name) {
-        const box = document.getElementById('chat-box');
         const div = document.createElement('div');
-        div.className = `msg msg-${side}`;
-        div.innerHTML = `<small style="display:block; font-size:10px; opacity:0.6">${name}</small>${txt}`;
+        div.className = `msg-row row-${side}`;
+        div.innerHTML = `<div class="msg msg-${side}"><small class="u-name">${name}</small>${txt}</div>`;
+        const box = document.getElementById('chat-box');
+        box.appendChild(div);
+        box.scrollTop = box.scrollHeight;
+    }
+
+    function addImg(src, side, name) {
+        const div = document.createElement('div');
+        div.className = `msg-row row-${side}`;
+        div.innerHTML = `<div class="msg msg-${side}"><small class="u-name">${name}</small><img src="${src}" style="max-width:100%; border-radius:10px; margin-top:5px;"></div>`;
+        const box = document.getElementById('chat-box');
         box.appendChild(div);
         box.scrollTop = box.scrollHeight;
     }
