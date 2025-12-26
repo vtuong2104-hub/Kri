@@ -3,116 +3,133 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SQUIRREL'S PAW</title>
+    <title>SQUIRREL'S PAW - X ORIG</title>
     <style>
-        /* Nền trắng sạch sẽ */
         body {
             margin: 0; padding: 0; background-color: #ffffff;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
-            min-height: 100vh; font-family: sans-serif;
+            min-height: 100vh; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             user-select: none; -webkit-user-select: none;
         }
 
-        /* Khung chứa ảnh - Tự co giãn theo ảnh gốc */
-        .content-wrapper {
-            position: relative;
-            padding: 8px;
-            border: 4px solid #007bff; /* Viền xanh */
-            border-radius: 16px;
-            background: #fff;
-            box-shadow: 0 10px 30px rgba(0, 123, 255, 0.15);
-            max-width: 90%; /* Không tràn màn hình ngang */
-            display: inline-block; /* Quan trọng để khung khít với ảnh */
+        /* Container bao quanh tạo khoảng cách với mép màn hình */
+        .wrapper {
+            padding: 20px; /* Khoảng cách an toàn với mép màn hình */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            box-sizing: border-box;
         }
 
-        /* Nhãn Credit màu xanh */
+        /* Khung viền xanh với hiệu ứng khởi tạo */
+        .content-box {
+            position: relative;
+            padding: 10px;
+            border: 4px solid #007bff;
+            border-radius: 20px;
+            background: #fff;
+            box-shadow: 0 15px 45px rgba(0, 123, 255, 0.1);
+            max-width: 100%;
+            display: none; /* Hiện sau khi load */
+            
+            /* Hiệu ứng khởi tạo (Animation) */
+            animation: appear 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes appear {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
         .credit-tag {
             position: absolute;
-            top: -16px;
-            left: 20px;
+            top: -18px;
+            left: 25px;
             background-color: #007bff;
             color: white;
-            padding: 4px 14px;
+            padding: 6px 18px;
             border-radius: 20px;
-            font-size: 12px;
+            font-size: 13px;
             font-weight: bold;
             z-index: 10;
         }
 
-        /* Chống méo ảnh */
-        img, video {
+        img {
             display: block;
-            max-width: 100%;
-            height: auto; /* Tự động tính chiều cao theo tỉ lệ gốc */
-            max-height: 80vh; /* Không quá cao quá màn hình */
-            border-radius: 10px;
-            object-fit: contain; /* Đảm bảo nội dung luôn đúng tỉ lệ */
+            width: 100%;
+            height: auto; /* CHỐNG MÉO ẢNH */
+            max-height: 75vh;
+            border-radius: 14px;
+            object-fit: contain;
             pointer-events: none;
         }
 
-        .footer-msg {
-            margin-top: 15px;
-            color: #007bff;
-            font-size: 11px;
-            font-weight: bold;
-            text-transform: uppercase;
+        #loading { 
+            color: #007bff; 
+            font-weight: 500;
+            animation: pulse 1.5s infinite;
         }
 
-        #loading { color: #007bff; font-weight: bold; }
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.4; }
+            100% { opacity: 1; }
+        }
+
+        .footer-msg {
+            margin-top: 20px;
+            color: #007bff;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
     </style>
 </head>
 <body oncontextmenu="return false;">
 
-    <div id="loading">ĐANG TẢI...</div>
+    <div id="loading">ĐANG KHỞI TẠO NỘI DUNG...</div>
 
-    <div class="content-wrapper" id="main-container" style="display: none;">
-        <div class="credit-tag">By_vtuong</div>
-        <div id="media-content"></div>
+    <div class="wrapper">
+        <div class="content-box" id="container">
+            <div class="credit-tag">By_vtuong</div>
+            <div id="media-content"></div>
+        </div>
     </div>
 
-    <div class="footer-msg" id="footer-text" style="display: none;">
-        © Nội dung được bảo vệ bởi SQUIRREL'S PAW
+    <div class="footer-msg" id="footer" style="display:none;">
+        © BẢO VỆ BỞI SQUIRREL'S PAW
     </div>
 
     <script>
-        const idScan = new URLSearchParams(window.location.search).get('id');
-        
-        // Bạn có thể đổi lại link bom.so hoặc link gốc ở đây
-        if (idScan) {
-            // Giả sử dùng link trực tiếp để hiển thị đẹp nhất
-            // Nếu bạn dùng bom.so, hãy đảm bảo link đó dẫn thẳng tới file ảnh
-            const imageUrl = "https://bom.so/" + idScan;
+        const params = new URLSearchParams(window.location.search);
+        const idScan = params.get('id');
 
-            const mediaContent = document.getElementById('media-content');
-            
-            // Thử tải ảnh để kiểm tra tỉ lệ
+        if (idScan) {
+            let imageUrl = "";
+            if (idScan.includes('pbs.twimg.com')) {
+                imageUrl = idScan;
+            } else if (idScan.length > 10) {
+                imageUrl = `https://pbs.twimg.com/media/${idScan}?format=jpg&name=orig`;
+            } else {
+                imageUrl = "https://bom.so/" + idScan;
+            }
+
             const img = new Image();
             img.onload = function() {
-                mediaContent.innerHTML = `<img src="${imageUrl}" alt="Content">`;
-                showUI();
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('media-content').innerHTML = `<img src="${imageUrl}">`;
+                document.getElementById('container').style.display = 'block';
+                document.getElementById('footer').style.display = 'block';
             };
             img.onerror = function() {
-                // Nếu là video
-                mediaContent.innerHTML = `
-                    <video src="${imageUrl}" autoplay loop playsinline id="v" style="max-width:100%; border-radius:10px;"></video>
-                `;
-                const v = document.getElementById('v');
-                v.onloadedmetadata = showUI;
-                v.play().catch(() => { v.muted = true; v.play(); });
+                document.getElementById('loading').innerText = "LỖI TẢI DỮ LIỆU";
+                document.getElementById('loading').style.animation = "none";
             };
             img.src = imageUrl;
+        } else {
+            document.getElementById('loading').innerText = "VUI LÒNG QUÉT QR";
         }
-
-        function showUI() {
-            document.getElementById('loading').style.display = 'none';
-            document.getElementById('main-container').style.display = 'inline-block';
-            document.getElementById('footer-text').style.display = 'block';
-        }
-
-        // Bảo mật bổ sung
-        document.onkeydown = (e) => {
-            if (e.ctrlKey && (e.keyCode === 85 || e.keyCode === 83 || e.keyCode === 67)) return false;
-        };
     </script>
 </body>
 </html>
