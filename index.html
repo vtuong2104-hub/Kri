@@ -2,167 +2,116 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Ketnoi090 - Group Cloud</title>
-    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SQUIRREL'S PAW</title>
     <style>
-        :root { --bg: #000; --primary: #00d2ff; --me: #0084ff; }
-        body { font-family: sans-serif; background: var(--bg); color: white; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
-        
-        /* Video Grid: Tự động chia ô (2x2 nếu có 4 người) */
-        #video-grid { 
-            display: grid; 
-            grid-template-columns: repeat(auto-fit, minmax(45%, 1fr)); 
-            gap: 5px; 
-            padding: 5px; 
-            background: #080808;
-            max-height: 40vh; /* Giới hạn chiều cao video để nhường chỗ cho chat */
-            overflow-y: auto;
+        /* Giao diện đơn giản, tối ưu cho di động */
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            color: white;
+            font-family: sans-serif;
+            overflow: hidden;
+            /* Chặn copy text */
+            user-select: none;
+            -webkit-user-select: none;
         }
-        .v-box { position: relative; background: #222; border-radius: 8px; overflow: hidden; height: 120px; border: 1px solid #333; }
-        video { width: 100%; height: 100%; object-fit: cover; }
-        .tag { position: absolute; bottom: 5px; left: 5px; font-size: 10px; background: rgba(0,0,0,0.6); padding: 2px 5px; border-radius: 3px; }
 
-        /* Khung Chat: Luôn hiển thị ở giữa */
-        #chat-box { 
-            flex: 1; 
-            overflow-y: auto; 
-            padding: 15px; 
-            padding-bottom: 80px; /* Chừa chỗ cho thanh nhập liệu fixed */
-            display: flex; 
-            flex-direction: column; 
-            gap: 10px; 
-            background: #000; 
+        .content-container {
+            max-width: 100%;
+            max-height: 85vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
         }
-        .msg-row { display: flex; width: 100%; }
-        .row-me { justify-content: flex-end; }
-        .row-remote { justify-content: flex-start; }
-        .msg { padding: 8px 12px; border-radius: 15px; max-width: 75%; font-size: 14px; }
-        .msg-me { background: var(--me); border-bottom-right-radius: 2px; }
-        .msg-remote { background: #333; border-bottom-left-radius: 2px; }
 
-        /* Thanh nhập liệu: CỐ ĐỊNH Ở ĐÁY */
-        #input-bar { 
-            position: fixed; 
-            bottom: 0; 
-            left: 0; 
-            right: 0; 
-            padding: 10px; 
-            display: flex; 
-            gap: 8px; 
-            background: #1a1a1a; 
-            border-top: 1px solid #333; 
-            z-index: 1000;
-            padding-bottom: calc(10px + env(safe-area-inset-bottom));
+        /* Hiển thị linh hoạt theo tỉ lệ 3:4 hoặc dọc */
+        img, video {
+            max-width: 100%;
+            max-height: 85vh;
+            object-fit: contain;
+            box-shadow: 0 0 20px rgba(255,255,255,0.1);
+            pointer-events: none; /* Chặn chuột phải/giữ để lưu ảnh */
         }
-        #msg-in { flex: 1; padding: 10px 15px; border-radius: 20px; border: none; background: #333; color: white; outline: none; }
 
-        #overlay { position: fixed; inset: 0; background: var(--bg); z-index: 2000; display: flex; align-items: center; justify-content: center; }
+        .btn-visit {
+            margin-top: 20px;
+            padding: 12px 30px;
+            background: #fff;
+            color: #000;
+            text-decoration: none;
+            border-radius: 30px;
+            font-weight: bold;
+            z-index: 10;
+        }
+
+        #loading { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); }
     </style>
 </head>
-<body>
+<body oncontextmenu="return false;"> <div id="loading">Đang tải dữ liệu...</div>
 
-<div id="overlay">
-    <div style="background:#1a1a1a; padding:25px; border-radius:20px; text-align:center; width:280px;">
-        <h2 style="color:var(--primary)">KETNOI090</h2>
-        <input type="text" id="user-name" placeholder="Tên bạn..." style="width:100%; padding:10px; margin:10px 0; background:#000; color:white; border:1px solid #444; border-radius:8px; text-align:center;">
-        <button onclick="startApp()" style="width:100%; padding:12px; background:var(--primary); border:none; border-radius:8px; font-weight:bold;">VÀO PHÒNG</button>
-    </div>
-</div>
+    <div class="content-container" id="display-area">
+        </div>
 
-<div id="video-grid">
-    <div class="v-box">
-        <video id="local-video" autoplay muted playsinline style="transform: scaleX(-1);"></video>
-        <div class="tag">Tôi</div>
-    </div>
-</div>
+    <a id="web-link" href="#" class="btn-visit" style="display: none;">Truy cập ngay</a>
 
-<div id="chat-box"></div>
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const idScan = urlParams.get('id');
+        const apiURL = "https://sheetdb.io/api/v1/xc2po44ewjdt8/search?id=" + idScan;
 
-<div id="input-bar">
-    <button style="background:none; border:none; font-size:20px;" onclick="document.getElementById('file-in').click()">📷</button>
-    <input type="file" id="file-in" hidden accept="image/*" onchange="sendFile(this)">
-    <input type="text" id="msg-in" placeholder="Nhắn tin..." onkeypress="if(event.key==='Enter') sendText()">
-    <button onclick="sendText()" style="background:var(--primary); border:none; border-radius:50%; width:40px; height:40px;">🚀</button>
-</div>
+        if (idScan) {
+            fetch(apiURL)
+            .then(res => res.json())
+            .then(data => {
+                if (data.length > 0) {
+                    const item = data[0];
+                    const displayArea = document.getElementById('display-area');
+                    const loading = document.getElementById('loading');
+                    const btn = document.getElementById('web-link');
 
-<script>
-    const BIN_ID = "694d410443b1c97be9047914"; 
-    const API_KEY = "$2a$10$2BLENCGAiBNnNJFMRICHTedOtWa19TvenTNDCWmE7oQD6iugGK0be";
+                    loading.style.display = 'none';
+                    btn.href = item.web_url;
+                    btn.style.display = 'block';
 
-    let peer, localStream, myName;
-    let connections = {};
+                    // Kiểm tra xem là Video hay Ảnh (dựa vào đuôi file)
+                    const fileUrl = item.image_url.toLowerCase();
+                    const isVideo = fileUrl.includes('.mp4') || fileUrl.includes('.mov') || fileUrl.includes('.webm');
 
-    async function startApp() {
-        myName = document.getElementById('user-name').value.trim();
-        if(!myName) return alert("Nhập tên!");
-        
-        localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true }).catch(() => null);
-        document.getElementById('local-video').srcObject = localStream;
-        document.getElementById('overlay').style.display = 'none';
-
-        peer = new Peer();
-        peer.on('open', async (myId) => {
-            const res = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, { headers: { "X-Master-Key": API_KEY } });
-            const data = await res.json();
-            const hostId = data.record.hostId;
-
-            if (!hostId || hostId === "") {
-                await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
-                    method: 'PUT', headers: { "Content-Type": "application/json", "X-Master-Key": API_KEY },
-                    body: JSON.stringify({ hostId: myId })
-                });
-            } else {
-                // Tự động kết nối với host
-                setupData(peer.connect(hostId));
-                peer.call(hostId, localStream);
-            }
-        });
-
-        peer.on('call', (call) => {
-            call.answer(localStream);
-            setupVideo(call);
-        });
-        peer.on('connection', setupData);
-    }
-
-    function setupData(conn) {
-        connections[conn.peer] = conn;
-        conn.on('data', (data) => {
-            if(data.type === 'text') addMsg(data.content, 'remote', data.name);
-            if(data.type === 'image') addImg(data.content, 'remote', data.name);
-        });
-    }
-
-    function setupVideo(call) {
-        call.on('stream', (stream) => {
-            if (document.getElementById('v-' + call.peer)) return;
-            const box = document.createElement('div');
-            box.className = 'v-box'; box.id = 'v-' + call.peer;
-            const v = document.createElement('video');
-            v.srcObject = stream; v.autoplay = true; v.playsInline = true;
-            box.appendChild(v);
-            document.getElementById('video-grid').appendChild(box);
-        });
-    }
-
-    function sendText() {
-        const input = document.getElementById('msg-in');
-        if(input.value.trim()) {
-            Object.values(connections).forEach(c => c.send({ type: 'text', content: input.value, name: myName }));
-            addMsg(input.value, 'me', myName);
-            input.value = '';
+                    if (isVideo) {
+                        displayArea.innerHTML = `
+                            <video id="myVideo" playsinline autoplay muted loop disablePictureInPicture controlsList="nodownload nofullscreen noremoteplayback">
+                                <source src="${item.image_url}" type="video/mp4">
+                            </video>
+                        `;
+                        const video = document.getElementById('myVideo');
+                        
+                        // Cố gắng bật âm thanh tự động (Trình duyệt thường chặn, cần tương tác hoặc để muted)
+                        video.muted = false; 
+                        video.play().catch(() => {
+                            console.log("Trình duyệt chặn tự động phát âm thanh. Cần người dùng chạm vào màn hình.");
+                            // Nếu bị chặn, để lại nút Unmute hoặc giữ muted để video vẫn chạy
+                            video.muted = true;
+                            video.play();
+                        });
+                    } else {
+                        displayArea.innerHTML = `<img src="${item.image_url}" alt="Squirrel Content">`;
+                    }
+                }
+            });
         }
-    }
 
-    function addMsg(txt, side, name) {
-        const div = document.createElement('div');
-        div.className = `msg-row row-${side}`;
-        div.innerHTML = `<div class="msg msg-${side}"><small style="display:block;font-size:10px;opacity:0.5">${name}</small>${txt}</div>`;
-        document.getElementById('chat-box').appendChild(div);
-        document.getElementById('chat-box').scrollTop = 9999;
-    }
-    // (Phần gửi ảnh giữ nguyên như bản trước...)
-</script>
+        // Chặn phím tắt F12, Ctrl+U, v.v. để bảo mật thêm
+        document.onkeydown = function(e) {
+            if (e.ctrlKey && (e.keyCode === 67 || e.keyCode === 86 || e.keyCode === 85 || e.keyCode === 117)) return false;
+        };
+    </script>
 </body>
 </html>
