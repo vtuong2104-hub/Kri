@@ -11,79 +11,62 @@
             min-height: 100vh; color: white; font-family: sans-serif;
             user-select: none; -webkit-user-select: none;
         }
-        .content-container {
-            width: 100%; max-height: 80vh; display: flex; justify-content: center; align-items: center;
-        }
-        img, video {
-            max-width: 95%; max-height: 80vh; object-fit: contain;
-            pointer-events: none;
-            border-radius: 8px;
-        }
+        .content-container { width: 100%; max-height: 80vh; display: flex; justify-content: center; align-items: center; }
+        img, video { max-width: 95%; max-height: 80vh; object-fit: contain; pointer-events: none; border-radius: 10px; }
         .btn-visit {
-            margin-top: 25px; padding: 12px 35px; background: #fff; color: #000;
-            text-decoration: none; border-radius: 30px; font-weight: bold;
-            box-shadow: 0 4px 15px rgba(255,255,255,0.2);
+            margin-top: 25px; padding: 15px 40px; background: #fff; color: #000;
+            text-decoration: none; border-radius: 35px; font-weight: bold;
+            box-shadow: 0 4px 15px rgba(255,255,255,0.3);
         }
-        #loading { font-size: 16px; opacity: 0.8; }
+        #status { font-size: 16px; color: #aaa; }
     </style>
 </head>
 <body oncontextmenu="return false;">
 
-    <div id="loading">Đang kiểm tra mã QR...</div>
-
+    <div id="status">Đang quét dữ liệu...</div>
     <div class="content-container" id="display-area"></div>
-
     <a id="web-link" href="#" class="btn-visit" style="display: none;">MỞ LIÊN KẾT</a>
 
     <script>
         const urlParams = new URLSearchParams(window.location.search);
         const idScan = urlParams.get('id');
-        const apiURL = "https://sheetdb.io/api/v1/xc2po44ewjdt8/search?id=" + idScan;
-
+        
+        // Gọi API SheetDB
         if (idScan) {
-            fetch(apiURL)
+            fetch("https://sheetdb.io/api/v1/xc2po44ewjdt8")
             .then(res => res.json())
             .then(data => {
-                if (data.length > 0) {
-                    const item = data[0];
+                // Tìm kiếm ID trong dữ liệu trả về
+                const item = data.find(row => String(row.id) === String(idScan));
+
+                if (item) {
+                    document.getElementById('status').style.display = 'none';
                     const displayArea = document.getElementById('display-area');
-                    const loading = document.getElementById('loading');
                     const btn = document.getElementById('web-link');
 
-                    loading.style.display = 'none';
-                    
-                    // Chấp nhận cả tên cột 'web_url' hoặc 'wed_url'
-                    btn.href = item.web_url || item.wed_url; 
+                    // Hiển thị nút bấm (hỗ trợ cả wed_url và web_url)
+                    btn.href = item.wed_url || item.web_url;
                     btn.style.display = 'block';
 
-                    const fileUrl = item.image_url.toLowerCase();
-                    // Kiểm tra nếu là video (bao gồm cả link dropbox có mp4)
-                    const isVideo = fileUrl.includes('.mp4') || fileUrl.includes('.mov') || fileUrl.includes('video');
-
-                    if (isVideo) {
+                    const fileUrl = item.image_url;
+                    // Kiểm tra định dạng video
+                    if (fileUrl.toLowerCase().match(/\.(mp4|mov|webm)/) || fileUrl.includes('video')) {
                         displayArea.innerHTML = `
-                            <video id="myVideo" playsinline autoplay loop controlsList="nodownload">
-                                <source src="${item.image_url}" type="video/mp4">
-                            </video>
-                        `;
-                        const video = document.getElementById('myVideo');
-                        video.play().catch(() => {
-                            video.muted = true; // Nếu trình duyệt chặn âm thanh, phát ở chế độ im lặng
-                            video.play();
-                        });
+                            <video id="v" playsinline autoplay loop controlsList="nodownload">
+                                <source src="${fileUrl}" type="video/mp4">
+                            </video>`;
+                        const v = document.getElementById('v');
+                        v.play().catch(() => { v.muted = true; v.play(); });
                     } else {
-                        // Hiển thị ảnh
-                        displayArea.innerHTML = `<img src="${item.image_url}" alt="Content">`;
+                        displayArea.innerHTML = `<img src="${fileUrl}">`;
                     }
                 } else {
-                    document.getElementById('loading').innerText = "Mã ID " + idScan + " không tồn tại!";
+                    document.getElementById('status').innerText = "Không tìm thấy mã: " + idScan;
                 }
             })
-            .catch(err => {
-                document.getElementById('loading').innerText = "Lỗi kết nối máy chủ!";
-            });
+            .catch(() => { document.getElementById('status').innerText = "Lỗi kết nối!"; });
         } else {
-            document.getElementById('loading').innerText = "Vui lòng quét mã QR hợp lệ.";
+            document.getElementById('status').innerText = "Vui lòng dùng mã QR hợp lệ.";
         }
     </script>
 </body>
