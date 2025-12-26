@@ -5,62 +5,35 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SQUIRREL'S PAW</title>
     <style>
-        /* Giao diện đơn giản, tối ưu cho di động */
         body {
-            margin: 0;
-            padding: 0;
-            background-color: #000;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            color: white;
-            font-family: sans-serif;
-            overflow: hidden;
-            /* Chặn copy text */
-            user-select: none;
-            -webkit-user-select: none;
+            margin: 0; padding: 0; background-color: #000;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            min-height: 100vh; color: white; font-family: sans-serif;
+            user-select: none; -webkit-user-select: none;
         }
-
         .content-container {
-            max-width: 100%;
-            max-height: 85vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            position: relative;
+            width: 100%; max-height: 80vh; display: flex; justify-content: center; align-items: center;
         }
-
-        /* Hiển thị linh hoạt theo tỉ lệ 3:4 hoặc dọc */
         img, video {
-            max-width: 100%;
-            max-height: 85vh;
-            object-fit: contain;
-            box-shadow: 0 0 20px rgba(255,255,255,0.1);
-            pointer-events: none; /* Chặn chuột phải/giữ để lưu ảnh */
+            max-width: 95%; max-height: 80vh; object-fit: contain;
+            pointer-events: none;
+            border-radius: 8px;
         }
-
         .btn-visit {
-            margin-top: 20px;
-            padding: 12px 30px;
-            background: #fff;
-            color: #000;
-            text-decoration: none;
-            border-radius: 30px;
-            font-weight: bold;
-            z-index: 10;
+            margin-top: 25px; padding: 12px 35px; background: #fff; color: #000;
+            text-decoration: none; border-radius: 30px; font-weight: bold;
+            box-shadow: 0 4px 15px rgba(255,255,255,0.2);
         }
-
-        #loading { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); }
+        #loading { font-size: 16px; opacity: 0.8; }
     </style>
 </head>
-<body oncontextmenu="return false;"> <div id="loading">Đang tải dữ liệu...</div>
+<body oncontextmenu="return false;">
 
-    <div class="content-container" id="display-area">
-        </div>
+    <div id="loading">Đang kiểm tra mã QR...</div>
 
-    <a id="web-link" href="#" class="btn-visit" style="display: none;">Truy cập ngay</a>
+    <div class="content-container" id="display-area"></div>
+
+    <a id="web-link" href="#" class="btn-visit" style="display: none;">MỞ LIÊN KẾT</a>
 
     <script>
         const urlParams = new URLSearchParams(window.location.search);
@@ -78,40 +51,40 @@
                     const btn = document.getElementById('web-link');
 
                     loading.style.display = 'none';
-                    btn.href = item.web_url;
+                    
+                    // Chấp nhận cả tên cột 'web_url' hoặc 'wed_url'
+                    btn.href = item.web_url || item.wed_url; 
                     btn.style.display = 'block';
 
-                    // Kiểm tra xem là Video hay Ảnh (dựa vào đuôi file)
                     const fileUrl = item.image_url.toLowerCase();
-                    const isVideo = fileUrl.includes('.mp4') || fileUrl.includes('.mov') || fileUrl.includes('.webm');
+                    // Kiểm tra nếu là video (bao gồm cả link dropbox có mp4)
+                    const isVideo = fileUrl.includes('.mp4') || fileUrl.includes('.mov') || fileUrl.includes('video');
 
                     if (isVideo) {
                         displayArea.innerHTML = `
-                            <video id="myVideo" playsinline autoplay muted loop disablePictureInPicture controlsList="nodownload nofullscreen noremoteplayback">
+                            <video id="myVideo" playsinline autoplay loop controlsList="nodownload">
                                 <source src="${item.image_url}" type="video/mp4">
                             </video>
                         `;
                         const video = document.getElementById('myVideo');
-                        
-                        // Cố gắng bật âm thanh tự động (Trình duyệt thường chặn, cần tương tác hoặc để muted)
-                        video.muted = false; 
                         video.play().catch(() => {
-                            console.log("Trình duyệt chặn tự động phát âm thanh. Cần người dùng chạm vào màn hình.");
-                            // Nếu bị chặn, để lại nút Unmute hoặc giữ muted để video vẫn chạy
-                            video.muted = true;
+                            video.muted = true; // Nếu trình duyệt chặn âm thanh, phát ở chế độ im lặng
                             video.play();
                         });
                     } else {
-                        displayArea.innerHTML = `<img src="${item.image_url}" alt="Squirrel Content">`;
+                        // Hiển thị ảnh
+                        displayArea.innerHTML = `<img src="${item.image_url}" alt="Content">`;
                     }
+                } else {
+                    document.getElementById('loading').innerText = "Mã ID " + idScan + " không tồn tại!";
                 }
+            })
+            .catch(err => {
+                document.getElementById('loading').innerText = "Lỗi kết nối máy chủ!";
             });
+        } else {
+            document.getElementById('loading').innerText = "Vui lòng quét mã QR hợp lệ.";
         }
-
-        // Chặn phím tắt F12, Ctrl+U, v.v. để bảo mật thêm
-        document.onkeydown = function(e) {
-            if (e.ctrlKey && (e.keyCode === 67 || e.keyCode === 86 || e.keyCode === 85 || e.keyCode === 117)) return false;
-        };
     </script>
 </body>
 </html>
