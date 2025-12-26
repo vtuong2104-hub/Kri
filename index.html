@@ -3,102 +3,86 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SQUIRREL'S PAW - X ORIG</title>
+    <title>SQUIRREL'S PAW - SECURE VIEW</title>
     <style>
         body {
-            margin: 0; padding: 0; background-color: #ffffff;
+            margin: 0; padding: 0;
+            /* Sử dụng ảnh của bạn làm nền */
+            background: url('https://i.supaimg.com/87ce0ba6-1087-48dc-9778-f14cb4a2f0a9.jpg') no-repeat center center fixed;
+            background-size: cover;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
-            min-height: 100vh; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            min-height: 100vh; font-family: sans-serif;
             user-select: none; -webkit-user-select: none;
+            overflow: hidden;
         }
 
-        /* Container bao quanh tạo khoảng cách với mép màn hình */
+        /* Hiệu ứng kính mờ phủ lên toàn bộ nền */
+        body::before {
+            content: "";
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(255, 255, 255, 0.2); /* Lớp phủ trắng nhẹ */
+            backdrop-filter: blur(15px); /* Làm mờ nền */
+            z-index: -1;
+        }
+
         .wrapper {
-            padding: 20px; /* Khoảng cách an toàn với mép màn hình */
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            width: 100%;
-            box-sizing: border-box;
+            padding: 20px;
+            display: flex; justify-content: center; align-items: center;
+            width: 100%; box-sizing: border-box;
         }
 
-        /* Khung viền xanh với hiệu ứng khởi tạo */
+        /* Khung nội dung hiệu ứng kính mờ (Glassmorphism) */
         .content-box {
             position: relative;
-            padding: 10px;
-            border: 4px solid #007bff;
-            border-radius: 20px;
-            background: #fff;
-            box-shadow: 0 15px 45px rgba(0, 123, 255, 0.1);
+            padding: 8px;
+            border: 2px solid rgba(0, 123, 255, 0.5); /* Viền xanh nhẹ */
+            border-radius: 10px; /* Bo góc 10px */
+            background: rgba(255, 255, 255, 0.7);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(4px);
             max-width: 100%;
-            display: none; /* Hiện sau khi load */
-            
-            /* Hiệu ứng khởi tạo (Animation) */
-            animation: appear 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: none;
+            animation: appear 0.5s ease-out;
         }
 
         @keyframes appear {
-            from { opacity: 0; transform: scale(0.9); }
-            to { opacity: 1; transform: scale(1); }
-        }
-
-        .credit-tag {
-            position: absolute;
-            top: -18px;
-            left: 25px;
-            background-color: #007bff;
-            color: white;
-            padding: 6px 18px;
-            border-radius: 20px;
-            font-size: 13px;
-            font-weight: bold;
-            z-index: 10;
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         img {
             display: block;
             width: 100%;
-            height: auto; /* CHỐNG MÉO ẢNH */
+            height: auto;
             max-height: 75vh;
-            border-radius: 14px;
+            border-radius: 10px; /* Bo góc ảnh 10px */
             object-fit: contain;
-            pointer-events: none;
+            pointer-events: none; /* Chống tải ảnh */
         }
 
-        #loading { 
-            color: #007bff; 
-            font-weight: 500;
-            animation: pulse 1.5s infinite;
-        }
-
-        @keyframes pulse {
-            0% { opacity: 1; }
-            50% { opacity: 0.4; }
-            100% { opacity: 1; }
-        }
+        #loading { color: #004085; font-weight: bold; }
 
         .footer-msg {
-            margin-top: 20px;
-            color: #007bff;
+            margin-top: 15px;
+            color: #004085;
             font-size: 11px;
-            font-weight: 700;
-            letter-spacing: 1px;
+            font-weight: bold;
+            text-shadow: 0 1px 2px rgba(255,255,255,0.5);
         }
     </style>
 </head>
 <body oncontextmenu="return false;">
 
-    <div id="loading">ĐANG KHỞI TẠO NỘI DUNG...</div>
+    <div id="loading">ĐANG TẢI...</div>
 
     <div class="wrapper">
         <div class="content-box" id="container">
-            <div class="credit-tag">By_vtuong</div>
             <div id="media-content"></div>
         </div>
     </div>
 
     <div class="footer-msg" id="footer" style="display:none;">
-        © BẢO VỆ BỞI SQUIRREL'S PAW
+        © NỘI DUNG ĐƯỢC BẢO VỆ BỞI SQUIRREL'S PAW
     </div>
 
     <script>
@@ -123,13 +107,15 @@
                 document.getElementById('footer').style.display = 'block';
             };
             img.onerror = function() {
-                document.getElementById('loading').innerText = "LỖI TẢI DỮ LIỆU";
-                document.getElementById('loading').style.animation = "none";
+                document.getElementById('loading').innerText = "LỖI TẢI ẢNH";
             };
             img.src = imageUrl;
-        } else {
-            document.getElementById('loading').innerText = "VUI LÒNG QUÉT QR";
         }
+        
+        // Chặn phím tắt
+        document.onkeydown = (e) => {
+            if (e.ctrlKey && (e.keyCode === 85 || e.keyCode === 83 || e.keyCode === 67)) return false;
+        };
     </script>
 </body>
 </html>
