@@ -2,100 +2,106 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SQUIRREL'S PAW - 2025</title>
-    <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Paytone+One&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SQUIRREL'S PAW - 2026</title>
+    <link href="https://fonts.googleapis.com/css2?family=Paytone+One&display=swap" rel="stylesheet">
     <style>
         body {
-            margin: 0; padding: 0;
-            background-color: #2b6df2; /* Màu xanh chủ đạo như trong ảnh */
+            margin: 0; padding: 0; background-color: #2b6df2;
             display: flex; flex-direction: column; align-items: center;
-            min-height: 100vh;
-            font-family: 'Paytone One', sans-serif; /* Phông chữ béo, đậm */
+            min-height: 100vh; font-family: 'Paytone One', sans-serif;
             user-select: none; -webkit-user-select: none;
-            color: #7da683; /* Màu xanh lá nhạt cho chữ 2025 */
+            overflow-x: hidden;
         }
 
+        /* Năm 2026 */
         .header-year {
-            font-size: 120px;
-            margin-top: 20px;
-            line-height: 0.8;
-            letter-spacing: -5px;
+            font-size: clamp(80px, 25vw, 120px);
+            color: #7da683; margin-top: 30px;
+            line-height: 0.9; letter-spacing: -2px;
+            text-shadow: 4px 4px 0px rgba(0,0,0,0.1);
         }
 
-        .copyright-top {
-            color: #000; /* Chữ đen */
-            font-size: 22px;
-            margin-bottom: 30px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
+        /* Thương hiệu không còn chữ © */
+        .brand-name {
+            color: #fff; font-size: 22px;
+            margin: 10px 0 25px 0;
+            letter-spacing: 1px;
+            text-transform: uppercase;
         }
 
-        /* Khung hiển thị ảnh màu trắng */
+        /* Khung trắng chứa ảnh */
         .image-container {
-            width: 85%;
-            max-width: 400px;
+            width: 85%; max-width: 380px;
             background-color: #fff;
-            border: 5px solid #000; /* Viền đen dày */
-            border-radius: 10px;
-            padding: 10px;
-            box-sizing: border-box;
-            box-shadow: 10px 10px 0px rgba(0,0,0,0.2); /* Đổ bóng cứng */
-            display: none; /* Hiện sau khi tải */
-            animation: bounceIn 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            border: 6px solid #000; 
+            border-radius: 10px; /* Bo góc 10px */
+            padding: 8px; box-sizing: border-box;
+            box-shadow: 12px 12px 0px rgba(0,0,0,0.2);
+            display: none;
+            position: relative;
+            z-index: 5;
+            animation: popIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
 
-        @keyframes bounceIn {
-            0% { transform: scale(0.3); opacity: 0; }
+        @keyframes popIn {
+            0% { transform: scale(0.5); opacity: 0; }
             100% { transform: scale(1); opacity: 1; }
         }
 
-        img {
-            width: 100%;
-            height: auto;
-            display: block;
-            border-radius: 5px;
+        img.content-img {
+            width: 100%; height: auto;
+            display: block; border-radius: 4px;
             pointer-events: none;
         }
 
-        #loading {
-            margin-top: 50px;
-            color: #fff;
-            font-size: 20px;
+        .guard-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 10; background: transparent;
         }
 
-        /* Bảo mật */
-        .overlay {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            z-index: 10;
+        /* Sticker ở dưới cùng - Kích thước to gần bằng 2026 */
+        .bottom-sticker {
+            width: clamp(160px, 50vw, 240px); 
+            height: auto;
+            margin-top: 30px;
+            margin-bottom: 40px;
+            pointer-events: none;
+            filter: drop-shadow(8px 8px 0px rgba(0,0,0,0.1));
+            /* Hiệu ứng lắc nhẹ kiểu hoạt hình */
+            animation: wobble 3s ease-in-out infinite;
         }
+
+        @keyframes wobble {
+            0%, 100% { transform: rotate(-3deg); }
+            50% { transform: rotate(3deg); }
+        }
+
+        #loading { margin-top: 40px; color: #fff; font-size: 16px; opacity: 0.8; }
     </style>
 </head>
 <body oncontextmenu="return false;">
 
-    <div class="header-year">2025</div>
-    
-    <div class="copyright-top">
-        <span>©</span> SQUIRREL'S PAW
-    </div>
+    <div class="header-year">2026</div>
+    <div class="brand-name">SQUIRREL'S PAW</div>
 
     <div id="loading">ĐANG TẢI...</div>
 
     <div class="image-container" id="container">
-        <div class="overlay"></div> <div id="media-content"></div>
+        <div class="guard-overlay"></div>
+        <div id="media-content"></div>
     </div>
 
+    <img src="https://i.supaimg.com/4c9c8155-c8fb-4310-bf13-83985f93c5e4.png" class="bottom-sticker">
+
     <script>
-        const params = new URLSearchParams(window.location.search);
-        const idScan = params.get('id');
+        const idScan = new URLSearchParams(window.location.search).get('id');
 
         if (idScan) {
             let imageUrl = "";
-            // Logic nhận diện nguồn ảnh
             if (idScan.includes('pbs.twimg.com')) {
                 imageUrl = idScan;
-            } else if (idScan.length > 10) {
+            } else if (idScan.length > 15) {
                 imageUrl = `https://pbs.twimg.com/media/${idScan}?format=jpg&name=orig`;
             } else {
                 imageUrl = "https://bom.so/" + idScan;
@@ -104,18 +110,13 @@
             const img = new Image();
             img.onload = function() {
                 document.getElementById('loading').style.display = 'none';
-                document.getElementById('media-content').innerHTML = `<img src="${imageUrl}">`;
+                document.getElementById('media-content').innerHTML = `<img src="${imageUrl}" class="content-img">`;
                 document.getElementById('container').style.display = 'block';
             };
-            img.onerror = function() {
-                document.getElementById('loading').innerText = "LỖI KẾT NỐI ẢNH";
-            };
+            img.onerror = () => document.getElementById('loading').innerText = "LỖI TẢI DỮ LIỆU";
             img.src = imageUrl;
-        } else {
-            document.getElementById('loading').innerText = "VUI LÒNG QUÉT QR";
         }
 
-        // Chặn phím tắt bảo mật
         document.onkeydown = (e) => {
             if (e.ctrlKey && (e.keyCode === 85 || e.keyCode === 83 || e.keyCode === 67)) return false;
         };
