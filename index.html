@@ -5,68 +5,67 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SQUIRREL'S PAW</title>
     <style>
-        body {
-            margin: 0; padding: 0; background-color: #000;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            min-height: 100vh; color: white; font-family: sans-serif;
-            user-select: none; -webkit-user-select: none;
-        }
-        .content-container { width: 100%; max-height: 80vh; display: flex; justify-content: center; align-items: center; }
-        img, video { max-width: 95%; max-height: 80vh; object-fit: contain; pointer-events: none; border-radius: 10px; }
-        .btn-visit {
-            margin-top: 25px; padding: 15px 40px; background: #fff; color: #000;
-            text-decoration: none; border-radius: 35px; font-weight: bold;
-            box-shadow: 0 4px 15px rgba(255,255,255,0.3);
-        }
-        #status { font-size: 16px; color: #aaa; }
+        body { margin: 0; background: #000; color: #fff; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; overflow: hidden; user-select: none; }
+        #status { font-size: 14px; color: #888; text-align: center; padding: 20px; }
+        .content { width: 100%; max-height: 80vh; display: flex; justify-content: center; }
+        img, video { max-width: 95%; max-height: 80vh; border-radius: 12px; pointer-events: none; object-fit: contain; }
+        .btn { display: none; margin-top: 25px; padding: 15px 40px; background: #fff; color: #000; text-decoration: none; border-radius: 50px; font-weight: bold; box-shadow: 0 4px 15px rgba(255,255,255,0.2); transition: 0.3s; }
+        .btn:active { transform: scale(0.95); }
     </style>
 </head>
 <body oncontextmenu="return false;">
 
-    <div id="status">Đang quét dữ liệu...</div>
-    <div class="content-container" id="display-area"></div>
-    <a id="web-link" href="#" class="btn-visit" style="display: none;">MỞ LIÊN KẾT</a>
+    <div id="status">Đang kết nối máy chủ...</div>
+    <div class="content" id="media"></div>
+    <a id="btn" href="#" class="btn">MỞ LIÊN KẾT</a>
 
     <script>
         const urlParams = new URLSearchParams(window.location.search);
         const idScan = urlParams.get('id');
         
-        // Gọi API SheetDB
+        // API chính xác của bạn
+        const api = "https://sheetdb.io/api/v1/xc2po44ewjdt8";
+
         if (idScan) {
-            fetch("https://sheetdb.io/api/v1/xc2po44ewjdt8")
+            fetch(api)
             .then(res => res.json())
             .then(data => {
-                // Tìm kiếm ID trong dữ liệu trả về
-                const item = data.find(row => String(row.id) === String(idScan));
+                // Tìm dòng có id khớp (chuyển cả 2 về chuỗi để so sánh chính xác)
+                const item = data.find(row => String(row.id).trim() === String(idScan).trim());
 
                 if (item) {
                     document.getElementById('status').style.display = 'none';
-                    const displayArea = document.getElementById('display-area');
-                    const btn = document.getElementById('web-link');
+                    const mediaBox = document.getElementById('media');
+                    const btn = document.getElementById('btn');
 
-                    // Hiển thị nút bấm (hỗ trợ cả wed_url và web_url)
+                    // 1. Xử lý link Web (hỗ trợ cả web_url và wed_url)
                     btn.href = item.wed_url || item.web_url;
-                    btn.style.display = 'block';
+                    btn.style.display = 'inline-block';
 
-                    const fileUrl = item.image_url;
-                    // Kiểm tra định dạng video
-                    if (fileUrl.toLowerCase().match(/\.(mp4|mov|webm)/) || fileUrl.includes('video')) {
-                        displayArea.innerHTML = `
-                            <video id="v" playsinline autoplay loop controlsList="nodownload">
-                                <source src="${fileUrl}" type="video/mp4">
-                            </video>`;
+                    // 2. Xử lý link Ảnh/Video Dropbox
+                    let fileUrl = item.image_url;
+                    if (fileUrl.includes('dropbox.com') && !fileUrl.includes('raw=1')) {
+                        fileUrl += fileUrl.includes('?') ? '&raw=1' : '?raw=1';
+                    }
+
+                    // 3. Hiển thị
+                    const isVideo = fileUrl.toLowerCase().match(/\.(mp4|mov|webm)/) || fileUrl.includes('video');
+                    if (isVideo) {
+                        mediaBox.innerHTML = `<video id="v" src="${fileUrl}" autoplay loop playsinline controlsList="nodownload" style="width:95%"></video>`;
                         const v = document.getElementById('v');
                         v.play().catch(() => { v.muted = true; v.play(); });
                     } else {
-                        displayArea.innerHTML = `<img src="${fileUrl}">`;
+                        mediaBox.innerHTML = `<img src="${fileUrl}">`;
                     }
                 } else {
-                    document.getElementById('status').innerText = "Không tìm thấy mã: " + idScan;
+                    document.getElementById('status').innerText = "Lỗi: Không tìm thấy ID " + idScan;
                 }
             })
-            .catch(() => { document.getElementById('status').innerText = "Lỗi kết nối!"; });
+            .catch(err => {
+                document.getElementById('status').innerText = "Lỗi kết nối API! Vui lòng thử lại.";
+            });
         } else {
-            document.getElementById('status').innerText = "Vui lòng dùng mã QR hợp lệ.";
+            document.getElementById('status').innerText = "Vui lòng quét mã QR hợp lệ.";
         }
     </script>
 </body>
