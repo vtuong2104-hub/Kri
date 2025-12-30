@@ -13,7 +13,7 @@
             min-height: 100vh;
             font-family: 'Paytone One', sans-serif;
             user-select: none; -webkit-user-select: none;
-            overflow-x: hidden;
+            overflow: hidden; /* Ngăn cuộn trang khi cào */
         }
 
         .header-year {
@@ -21,6 +21,7 @@
             margin-top: 20px;
             color: #FFB800;
             text-shadow: 4px 4px 0px rgba(0,0,0,0.2);
+            line-height: 1;
         }
 
         .copyright-top {
@@ -30,10 +31,10 @@
             letter-spacing: 1px;
         }
 
-        /* Khung chứa chính */
         .image-container {
             width: 90%;
             max-width: 400px;
+            aspect-ratio: 1/1; /* Thiết lập khung vuông cố định trước khi ảnh tải */
             background-color: #fff;
             border: 5px solid #000;
             border-radius: 15px;
@@ -41,22 +42,31 @@
             box-sizing: border-box;
             box-shadow: 10px 10px 0px rgba(0,0,0,0.2);
             position: relative;
-            display: none;
+            visibility: hidden; /* Sẽ hiện lên ngay khi JS chạy */
+        }
+
+        #media-content {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            border-radius: 5px;
         }
 
         #media-content img {
             width: 100%;
-            height: auto;
+            height: 100%;
+            object-fit: cover; /* Đảm bảo ảnh lấp đầy khung */
             display: block;
-            border-radius: 5px;
-            visibility: hidden; /* Giữ chỗ nhưng ẩn đi để canvas phủ lên */
         }
 
-        /* Canvas lớp bạc */
         #scratch-canvas {
             position: absolute;
             top: 10px;
             left: 10px;
+            /* Sử dụng tính toán để khớp với padding của container */
             width: calc(100% - 20px);
             height: calc(100% - 20px);
             cursor: crosshair;
@@ -65,8 +75,6 @@
             z-index: 10;
         }
 
-        #loading { margin-top: 50px; color: #fff; }
-        
         .hint {
             margin-top: 15px;
             color: #fff;
@@ -82,14 +90,13 @@
     <div class="header-year">2026</div>
     <div class="copyright-top">SQUIRREL'S PAW</div>
 
-    <div id="loading">ĐANG TẢI...</div>
-
     <div class="image-container" id="container">
-        <div id="media-content"></div>
+        <div id="media-content">
+            </div>
         <canvas id="scratch-canvas"></canvas>
     </div>
     
-    <div class="hint" id="hint-text" style="display:none;">👆 Cào lớp bạc để xem hình</div>
+    <div class="hint" id="hint-text">👆 Cào lớp bạc để xem hình</div>
 
     <script>
         const params = new URLSearchParams(window.location.search);
@@ -99,71 +106,72 @@
         const ctx = canvas.getContext('2d', { willReadFrequently: true });
         let isDrawing = false;
 
+        // 1. Khởi tạo Canvas ngay lập tức
+        function setupCanvas() {
+            container.style.visibility = 'visible';
+            const rect = canvas.getBoundingClientRect();
+            canvas.width = rect.width;
+            canvas.height = rect.height;
+
+            // Vẽ lớp bạc
+            ctx.fillStyle = '#C0C0C0';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Thêm hiệu ứng nhám
+            for (let i = 0; i < 500; i++) {
+                ctx.fillStyle = 'rgba(0,0,0,0.05)';
+                ctx.fillRect(Math.random() * canvas.width, Math.random() * canvas.height, 2, 2);
+            }
+
+            ctx.font = "bold 20px sans-serif";
+            ctx.fillStyle = "#888";
+            ctx.textAlign = "center";
+            ctx.fillText("CÀO TẠI ĐÂY", canvas.width/2, canvas.height/2);
+        }
+
+        // 2. Tải ảnh song song
         if (idScan) {
             let imageUrl = idScan.includes('pbs.twimg.com') ? idScan : 
                            (idScan.length > 10 ? `https://pbs.twimg.com/media/${idScan}?format=jpg&name=orig` : "https://bom.so/" + idScan);
 
             const img = new Image();
             img.onload = function() {
-                document.getElementById('loading').style.display = 'none';
-                document.getElementById('media-content').innerHTML = `<img src="${imageUrl}" id="main-img">`;
-                container.style.display = 'block';
-                document.getElementById('hint-text').style.display = 'block';
-                
-                // Đợi ảnh render rồi lấy kích thước thật
-                setTimeout(() => {
-                    const mainImg = document.getElementById('main-img');
-                    initCanvas(mainImg.offsetWidth, mainImg.offsetHeight);
-                    mainImg.style.visibility = 'visible';
-                }, 100);
+                document.getElementById('media-content').innerHTML = `<img src="${imageUrl}">`;
             };
             img.src = imageUrl;
         }
 
-        function initCanvas(w, h) {
-            canvas.width = w;
-            canvas.height = h;
+        // Gọi khởi tạo ngay khi script chạy
+        setupCanvas();
 
-            // Vẽ lớp phủ màu bạc
-            ctx.fillStyle = '#D1D5DB'; 
-            ctx.fillRect(0, 0, w, h);
-
-            // Thêm các hạt li ti cho giống thẻ cào
-            for (let i = 0; i < 400; i++) {
-                ctx.fillStyle = 'rgba(0,0,0,0.08)';
-                ctx.fillRect(Math.random() * w, Math.random() * h, 2, 2);
-            }
-
-            // Chữ hướng dẫn
-            ctx.font = "bold 18px Arial";
-            ctx.fillStyle = "#6B7280";
-            ctx.textAlign = "center";
-            ctx.fillText("CÀO Ở ĐÂY", w/2, h/2);
-
-            // Sự kiện Chuột
-            canvas.addEventListener('mousedown', () => isDrawing = true);
-            canvas.addEventListener('mousemove', scratch);
-            window.addEventListener('mouseup', () => isDrawing = false);
-            
-            // Sự kiện Cảm ứng (Mobile)
-            canvas.addEventListener('touchstart', (e) => { isDrawing = true; scratch(e); });
-            canvas.addEventListener('touchmove', scratch);
-            canvas.addEventListener('touchend', () => isDrawing = false);
+        // 3. Xử lý thao tác cào
+        function getPos(e) {
+            const rect = canvas.getBoundingClientRect();
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            return {
+                x: clientX - rect.left,
+                y: clientY - rect.top
+            };
         }
 
         function scratch(e) {
             if (!isDrawing) return;
             e.preventDefault();
-            
-            const rect = canvas.getBoundingClientRect();
-            const x = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
-            const y = (e.touches ? e.touches[0].clientY : e.clientY) - rect.top;
-
+            const pos = getPos(e);
             ctx.globalCompositeOperation = 'destination-out';
             ctx.beginPath();
-            ctx.arc(x, y, 20, 0, Math.PI * 2);
+            ctx.arc(pos.x, pos.y, 25, 0, Math.PI * 2);
             ctx.fill();
         }
+
+        canvas.addEventListener('mousedown', (e) => { isDrawing = true; scratch(e); });
+        canvas.addEventListener('touchstart', (e) => { isDrawing = true; scratch(e); });
+        window.addEventListener('mousemove', scratch);
+        window.addEventListener('touchmove', scratch);
+        window.addEventListener('mouseup', () => isDrawing = false);
+        window.addEventListener('touchend', () => isDrawing = false);
+
     </script>
 </body>
 </html>
