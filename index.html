@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>SQUIRREL'S PAW - 2026</title>
-    <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Paytone+One&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Paytone+One&display=swap" rel="stylesheet">
     <style>
         body {
             margin: 0; padding: 0;
@@ -17,24 +17,20 @@
         }
 
         .header-year {
-            font-size: clamp(80px, 20vw, 120px);
+            font-size: 80px;
             margin-top: 20px;
-            line-height: 0.8;
-            letter-spacing: -5px;
             color: #FFB800;
-            text-shadow: 5px 5px 0px rgba(0,0,0,0.2);
+            text-shadow: 4px 4px 0px rgba(0,0,0,0.2);
         }
 
         .copyright-top {
             color: #ffffff;
-            font-size: 16px;
+            font-size: 14px;
             margin-bottom: 20px;
-            margin-top: 10px;
             letter-spacing: 1px;
-            opacity: 0.9;
         }
 
-        /* Khung chứa thẻ cào */
+        /* Khung chứa chính */
         .image-container {
             width: 90%;
             max-width: 400px;
@@ -46,7 +42,6 @@
             box-shadow: 10px 10px 0px rgba(0,0,0,0.2);
             position: relative;
             display: none;
-            overflow: hidden;
         }
 
         #media-content img {
@@ -54,9 +49,10 @@
             height: auto;
             display: block;
             border-radius: 5px;
+            visibility: hidden; /* Giữ chỗ nhưng ẩn đi để canvas phủ lên */
         }
 
-        /* Lớp Canvas phủ lên trên */
+        /* Canvas lớp bạc */
         #scratch-canvas {
             position: absolute;
             top: 10px;
@@ -65,22 +61,18 @@
             height: calc(100% - 20px);
             cursor: crosshair;
             border-radius: 5px;
-            touch-action: none; /* Quan trọng để không bị cuộn trang khi cào */
+            touch-action: none;
+            z-index: 10;
         }
 
-        #loading {
-            margin-top: 50px;
-            color: #fff;
-            font-size: 18px;
-        }
-
+        #loading { margin-top: 50px; color: #fff; }
+        
         .hint {
             margin-top: 15px;
             color: #fff;
-            font-size: 14px;
-            font-family: sans-serif;
+            font-size: 13px;
             background: rgba(0,0,0,0.3);
-            padding: 5px 15px;
+            padding: 8px 15px;
             border-radius: 20px;
         }
     </style>
@@ -97,14 +89,14 @@
         <canvas id="scratch-canvas"></canvas>
     </div>
     
-    <div class="hint" id="hint-text" style="display:none;">👆 Dùng tay cào lớp bạc để xem</div>
+    <div class="hint" id="hint-text" style="display:none;">👆 Cào lớp bạc để xem hình</div>
 
     <script>
         const params = new URLSearchParams(window.location.search);
         const idScan = params.get('id');
         const container = document.getElementById('container');
         const canvas = document.getElementById('scratch-canvas');
-        const ctx = canvas.getContext('2d');
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
         let isDrawing = false;
 
         if (idScan) {
@@ -112,85 +104,66 @@
                            (idScan.length > 10 ? `https://pbs.twimg.com/media/${idScan}?format=jpg&name=orig` : "https://bom.so/" + idScan);
 
             const img = new Image();
-            img.crossOrigin = "anonymous"; // Tránh lỗi bảo mật canvas
             img.onload = function() {
                 document.getElementById('loading').style.display = 'none';
                 document.getElementById('media-content').innerHTML = `<img src="${imageUrl}" id="main-img">`;
                 container.style.display = 'block';
                 document.getElementById('hint-text').style.display = 'block';
                 
-                // Khởi tạo canvas sau khi ảnh đã tải để lấy kích thước
-                setTimeout(initScratch, 100);
+                // Đợi ảnh render rồi lấy kích thước thật
+                setTimeout(() => {
+                    const mainImg = document.getElementById('main-img');
+                    initCanvas(mainImg.offsetWidth, mainImg.offsetHeight);
+                    mainImg.style.visibility = 'visible';
+                }, 100);
             };
-            img.onerror = () => document.getElementById('loading').innerText = "LỖI KẾT NỐI ẢNH";
             img.src = imageUrl;
         }
 
-        function initScratch() {
-            const mainImg = document.getElementById('main-img');
-            canvas.width = mainImg.offsetWidth;
-            canvas.height = mainImg.offsetHeight;
+        function initCanvas(w, h) {
+            canvas.width = w;
+            canvas.height = h;
 
-            // Vẽ lớp phủ màu xám
-            ctx.fillStyle = '#C0C0C0'; // Màu bạc
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            // Vẽ lớp phủ màu bạc
+            ctx.fillStyle = '#D1D5DB'; 
+            ctx.fillRect(0, 0, w, h);
 
-            // Thêm hiệu ứng hạt cho giống thẻ cào thật
-            for (let i = 0; i < 1000; i++) {
-                ctx.fillStyle = 'rgba(0,0,0,0.05)';
-                ctx.fillRect(Math.random() * canvas.width, Math.random() * canvas.height, 2, 2);
+            // Thêm các hạt li ti cho giống thẻ cào
+            for (let i = 0; i < 400; i++) {
+                ctx.fillStyle = 'rgba(0,0,0,0.08)';
+                ctx.fillRect(Math.random() * w, Math.random() * h, 2, 2);
             }
 
-            // Thêm chữ hướng dẫn lên canvas
-            ctx.font = "20px Arial";
-            ctx.fillStyle = "#888";
+            // Chữ hướng dẫn
+            ctx.font = "bold 18px Arial";
+            ctx.fillStyle = "#6B7280";
             ctx.textAlign = "center";
-            ctx.fillText("CÀO TẠI ĐÂY", canvas.width/2, canvas.height/2);
+            ctx.fillText("CÀO Ở ĐÂY", w/2, h/2);
 
-            // Gán sự kiện
-            canvas.addEventListener('mousedown', startDrawing);
+            // Sự kiện Chuột
+            canvas.addEventListener('mousedown', () => isDrawing = true);
             canvas.addEventListener('mousemove', scratch);
-            window.addEventListener('mouseup', stopDrawing);
+            window.addEventListener('mouseup', () => isDrawing = false);
             
-            canvas.addEventListener('touchstart', startDrawing);
+            // Sự kiện Cảm ứng (Mobile)
+            canvas.addEventListener('touchstart', (e) => { isDrawing = true; scratch(e); });
             canvas.addEventListener('touchmove', scratch);
-            window.addEventListener('touchend', stopDrawing);
-        }
-
-        function getCoords(e) {
-            const rect = canvas.getBoundingClientRect();
-            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-            return {
-                x: clientX - rect.left,
-                y: clientY - rect.top
-            };
-        }
-
-        function startDrawing(e) {
-            isDrawing = true;
-            scratch(e);
+            canvas.addEventListener('touchend', () => isDrawing = false);
         }
 
         function scratch(e) {
             if (!isDrawing) return;
             e.preventDefault();
-            const { x, y } = getCoords(e);
+            
+            const rect = canvas.getBoundingClientRect();
+            const x = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
+            const y = (e.touches ? e.touches[0].clientY : e.clientY) - rect.top;
 
             ctx.globalCompositeOperation = 'destination-out';
             ctx.beginPath();
-            ctx.arc(x, y, 25, 0, Math.PI * 2); // Kích thước đầu cào là 25
+            ctx.arc(x, y, 20, 0, Math.PI * 2);
             ctx.fill();
         }
-
-        function stopDrawing() {
-            isDrawing = false;
-        }
-
-        // Chặn phím tắt
-        document.onkeydown = (e) => {
-            if (e.ctrlKey && ['u', 's', 'c'].includes(e.key.toLowerCase())) return false;
-        };
     </script>
 </body>
 </html>
