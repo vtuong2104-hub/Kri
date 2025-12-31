@@ -3,175 +3,183 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SQUIRREL'S PAW - 2026</title>
-    <link href="https://fonts.googleapis.com/css2?family=Paytone+One&display=swap" rel="stylesheet">
+    <title>SQUIRREL'S PAW - GAME UI</title>
+    <link href="https://fonts.googleapis.com/css2?family=Paytone+One&family=Lexend+Deca:wght@400;700&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --primary-color: #ff85a2;
+            --success-color: #77dd77;
+            --error-color: #ff6961;
+            --bg-overlay: rgba(255, 255, 255, 0.2);
+        }
+
         body {
             margin: 0; padding: 0;
-            background-color: #2b6df2;
+            background: url('https://i.supaimg.com/87d30b37-99f0-4392-a4fa-d24c88d713e2.jpg') no-repeat center center fixed;
+            background-size: cover;
             display: flex; flex-direction: column; align-items: center;
             min-height: 100vh;
-            font-family: 'Paytone One', sans-serif;
-            user-select: none; -webkit-user-select: none;
-            overflow: hidden; /* Ngăn cuộn trang khi cào */
-        }
-
-        .header-year {
-            font-size: 80px;
-            margin-top: 20px;
-            color: #FFB800;
-            text-shadow: 4px 4px 0px rgba(0,0,0,0.2);
-            line-height: 1;
-        }
-
-        .copyright-top {
-            color: #ffffff;
-            font-size: 14px;
-            margin-bottom: 20px;
-            letter-spacing: 1px;
-        }
-
-        .image-container {
-            width: 90%;
-            max-width: 400px;
-            aspect-ratio: 1/1; /* Thiết lập khung vuông cố định trước khi ảnh tải */
-            background-color: #fff;
-            border: 5px solid #000;
-            border-radius: 15px;
-            padding: 10px;
-            box-sizing: border-box;
-            box-shadow: 10px 10px 0px rgba(0,0,0,0.2);
-            position: relative;
-            visibility: hidden; /* Sẽ hiện lên ngay khi JS chạy */
-        }
-
-        #media-content {
-            width: 100%;
-            height: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            font-family: 'Lexend Deca', sans-serif;
             overflow: hidden;
-            border-radius: 5px;
         }
 
-        #media-content img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover; /* Đảm bảo ảnh lấp đầy khung */
-            display: block;
+        /* Hiệu ứng Loading Game */
+        #loading-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #2b6df2; z-index: 1000;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
         }
+        .loader-bar {
+            width: 250px; height: 20px;
+            background: rgba(255,255,255,0.2);
+            border: 3px solid #fff; border-radius: 15px;
+            overflow: hidden; margin-top: 20px;
+        }
+        .loader-fill {
+            width: 0%; height: 100%;
+            background: #FFB800;
+            transition: width 0.3s;
+        }
+        .loading-text { color: #fff; font-family: 'Paytone One', sans-serif; font-size: 24px; letter-spacing: 2px; }
 
-        #scratch-canvas {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            /* Sử dụng tính toán để khớp với padding của container */
-            width: calc(100% - 20px);
-            height: calc(100% - 20px);
-            cursor: crosshair;
-            border-radius: 5px;
-            touch-action: none;
+        /* Thanh nhập liệu */
+        .input-section {
+            margin-top: 15px;
+            display: flex; gap: 10px;
+            padding: 15px;
+            background: var(--bg-overlay);
+            backdrop-filter: blur(10px);
+            border-radius: 10px;
+            border: 2px solid rgba(255,255,255,0.3);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
             z-index: 10;
         }
-
-        .hint {
-            margin-top: 15px;
-            color: #fff;
-            font-size: 13px;
-            background: rgba(0,0,0,0.3);
-            padding: 8px 15px;
-            border-radius: 20px;
+        input {
+            border: none; padding: 10px 20px; border-radius: 15px;
+            outline: none; font-size: 16px; width: 180px;
         }
+        button {
+            background: var(--primary-color);
+            color: white; border: none; padding: 10px 25px;
+            border-radius: 30px; font-weight: bold; cursor: pointer;
+            transition: transform 0.1s, background 0.3s;
+            box-shadow: 0 4px 0 #d66580;
+        }
+        button:active { transform: translateY(3px); box-shadow: 0 1px 0 #d66580; }
+
+        /* Khung ảnh đồng bộ màu */
+        .image-display {
+            margin-top: 70px;
+            width: 85%; max-width: 450px;
+            background: var(--bg-overlay);
+            backdrop-filter: blur(15px);
+            border: 4px solid rgba(255,255,255,0.5);
+            border-radius: 15px;
+            padding: 15px;
+            box-sizing: border-box;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+            display: none;
+            animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        @keyframes popIn {
+            from { transform: scale(0.8); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+        .image-display img {
+            width: 100%; border-radius: 15px; pointer-events: none;
+            display: block; border: 2px solid rgba(255,255,255,0.3);
+        }
+
+        /* Popup Thông báo */
+        #popup {
+            position: fixed; bottom: -100px;
+            padding: 15px 30px; border-radius: 15px;
+            color: white; font-weight: bold;
+            transition: bottom 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            z-index: 2000; box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        /* Chống copy/chuột phải */
+        body { -webkit-user-select: none; user-select: none; }
     </style>
 </head>
 <body oncontextmenu="return false;">
 
-    <div class="header-year">2026</div>
-    <div class="copyright-top">SQUIRREL'S PAW</div>
-
-    <div class="image-container" id="container">
-        <div id="media-content">
-            </div>
-        <canvas id="scratch-canvas"></canvas>
+    <div id="loading-screen">
+        <div class="loading-text">LOADING... <span id="percent">0%</span></div>
+        <div class="loader-bar"><div class="loader-fill" id="fill"></div></div>
     </div>
-    
-    <div class="hint" id="hint-text">👆 Cào lớp bạc để xem hình</div>
+
+    <div class="input-section">
+        <input type="text" id="idInput" placeholder="Nhập mã của bạn...">
+        <button onclick="checkCode()">XÁC NHẬN</button>
+    </div>
+
+    <div class="image-display" id="imgContainer">
+        <div id="media-content"></div>
+    </div>
+
+    <div id="popup"></div>
 
     <script>
-        const params = new URLSearchParams(window.location.search);
-        const idScan = params.get('id');
-        const container = document.getElementById('container');
-        const canvas = document.getElementById('scratch-canvas');
-        const ctx = canvas.getContext('2d', { willReadFrequently: true });
-        let isDrawing = false;
+        // Hiệu ứng Loading giả lập
+        window.addEventListener('load', () => {
+            let width = 0;
+            const fill = document.getElementById('fill');
+            const percent = document.getElementById('percent');
+            const interval = setInterval(() => {
+                if (width >= 100) {
+                    clearInterval(interval);
+                    document.getElementById('loading-screen').style.display = 'none';
+                } else {
+                    width += Math.floor(Math.random() * 10) + 1;
+                    if(width > 100) width = 100;
+                    fill.style.width = width + '%';
+                    percent.innerText = width + '%';
+                }
+            }, 100);
+        });
 
-        // 1. Khởi tạo Canvas ngay lập tức
-        function setupCanvas() {
-            container.style.visibility = 'visible';
-            const rect = canvas.getBoundingClientRect();
-            canvas.width = rect.width;
-            canvas.height = rect.height;
-
-            // Vẽ lớp bạc
-            ctx.fillStyle = '#C0C0C0';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            // Thêm hiệu ứng nhám
-            for (let i = 0; i < 500; i++) {
-                ctx.fillStyle = 'rgba(0,0,0,0.05)';
-                ctx.fillRect(Math.random() * canvas.width, Math.random() * canvas.height, 2, 2);
-            }
-
-            ctx.font = "bold 20px sans-serif";
-            ctx.fillStyle = "#888";
-            ctx.textAlign = "center";
-            ctx.fillText("CÀO TẠI ĐÂY", canvas.width/2, canvas.height/2);
+        function showPopup(msg, type) {
+            const popup = document.getElementById('popup');
+            popup.innerText = msg;
+            popup.style.background = type === 'success' ? 'var(--success-color)' : 'var(--error-color)';
+            popup.style.bottom = '40px';
+            setTimeout(() => { popup.style.bottom = '-100px'; }, 3000);
         }
 
-        // 2. Tải ảnh song song
-        if (idScan) {
-            let imageUrl = idScan.includes('pbs.twimg.com') ? idScan : 
-                           (idScan.length > 10 ? `https://pbs.twimg.com/media/${idScan}?format=jpg&name=orig` : "https://bom.so/" + idScan);
+        function checkCode() {
+            const val = document.getElementById('idInput').value.trim();
+            const container = document.getElementById('imgContainer');
+            const content = document.getElementById('media-content');
+
+            if (!val) {
+                showPopup("Vui lòng nhập mã!", "error");
+                return;
+            }
+
+            // Logic xử lý URL ảnh
+            let imageUrl = val.includes('pbs.twimg.com') ? val : 
+                           (val.length > 10 ? `https://pbs.twimg.com/media/${val}?format=jpg&name=orig` : "https://bom.so/" + val);
 
             const img = new Image();
             img.onload = function() {
-                document.getElementById('media-content').innerHTML = `<img src="${imageUrl}">`;
+                content.innerHTML = `<img src="${imageUrl}">`;
+                container.style.display = 'block';
+                showPopup("mã hợp lệ!", "success");
+            };
+            img.onerror = function() {
+                showPopup("Mã không hợp lệ hoặc lỗi kết nối!", "error");
+                container.style.display = 'none';
             };
             img.src = imageUrl;
         }
 
-        // Gọi khởi tạo ngay khi script chạy
-        setupCanvas();
-
-        // 3. Xử lý thao tác cào
-        function getPos(e) {
-            const rect = canvas.getBoundingClientRect();
-            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-            return {
-                x: clientX - rect.left,
-                y: clientY - rect.top
-            };
-        }
-
-        function scratch(e) {
-            if (!isDrawing) return;
-            e.preventDefault();
-            const pos = getPos(e);
-            ctx.globalCompositeOperation = 'destination-out';
-            ctx.beginPath();
-            ctx.arc(pos.x, pos.y, 25, 0, Math.PI * 2);
-            ctx.fill();
-        }
-
-        canvas.addEventListener('mousedown', (e) => { isDrawing = true; scratch(e); });
-        canvas.addEventListener('touchstart', (e) => { isDrawing = true; scratch(e); });
-        window.addEventListener('mousemove', scratch);
-        window.addEventListener('touchmove', scratch);
-        window.addEventListener('mouseup', () => isDrawing = false);
-        window.addEventListener('touchend', () => isDrawing = false);
-
+        // Bảo vệ nội dung
+        document.onkeydown = (e) => {
+            if (e.ctrlKey && ['u', 's', 'c', 'j'].includes(e.key.toLowerCase())) return false;
+            if (e.keyCode === 123) return false; // F12
+        };
     </script>
 </body>
 </html>
